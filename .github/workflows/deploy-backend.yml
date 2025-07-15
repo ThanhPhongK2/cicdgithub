@@ -1,32 +1,3 @@
-name: Deploy Backend to EC2
-
-on:
-  push:
-    paths:
-      - "backend/**"
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Upload Backend
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "backend/*"
-          target: "/tmp/backend"
-
       - name: Deploy Backend on EC2
         uses: appleboy/ssh-action@master
         with:
@@ -34,11 +5,20 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo ">> Cleanup & Copy Backend..."
             sudo rm -rf /var/www/backend
             sudo mkdir -p /var/www/backend
             sudo cp -r /tmp/backend/* /var/www/backend
             cd /var/www/backend
-            npm install
+
+            echo ">> Install Dependencies..."
+            [ -f package.json ] && npm install || echo "package.json not found!"
+
+            echo ">> Restart Backend with PM2..."
             if command -v pm2 > /dev/null; then
               pm2 restart backend || pm2 start index.js --name backend
+              pm2 save
+              pm2 logs backend --lines 100
+            else
+              echo "PM2 not found! Please install PM2 manually."
             fi
