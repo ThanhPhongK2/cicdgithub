@@ -1,0 +1,44 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    paths:
+      - "backend/**"
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Upload Backend
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "backend/*"
+          target: "/tmp/backend"
+
+      - name: Deploy Backend on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo rm -rf /var/www/backend
+            sudo mkdir -p /var/www/backend
+            sudo cp -r /tmp/backend/* /var/www/backend
+            cd /var/www/backend
+            npm install
+            if command -v pm2 > /dev/null; then
+              pm2 restart backend || pm2 start index.js --name backend
+            fi
