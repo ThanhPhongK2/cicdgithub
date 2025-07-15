@@ -2,7 +2,7 @@ name: Deploy Fullstack App to EC2
 
 on:
   push:
-    branches: [main] # thay đổi nếu dùng branch khác
+    branches: [main] # sửa theo branch của bạn
 
 jobs:
   deploy:
@@ -18,60 +18,62 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install Frontend dependencies
+      - name: Install frontend dependencies
         run: |
-          cd Frontend
+          cd frontend
           npm install
 
-      - name: Build Frontend
+      - name: Build frontend
         run: |
-          cd Frontend
+          cd frontend
           npm run build
 
-      # Upload frontend & backend lên EC2
-      - name: Upload Frontend
+      # Upload frontend build
+      - name: Upload frontend to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Frontend/build/*"
+          source: "frontend/build/*"
           target: "/tmp/frontend"
 
-      - name: Upload Backend
+      # Upload backend
+      - name: Upload backend to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "Backend/*"
+          source: "backend/*"
           target: "/tmp/backend"
 
-      # SSH để deploy cả frontend và backend
-      - name: Deploy on EC2
+      # SSH deploy script
+      - name: SSH deploy on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Deploy Frontend
+            # FRONTEND
             sudo rm -rf /var/www/html/*
             sudo cp -r /tmp/frontend/* /var/www/html/
             sudo chown -R www-data:www-data /var/www/html
 
-            # Deploy Backend
+            # BACKEND
             sudo rm -rf /var/www/backend
             sudo mkdir -p /var/www/backend
             sudo cp -r /tmp/backend/* /var/www/backend
             cd /var/www/backend
             npm install
 
-            # Restart backend service (PM2 hoặc systemd)
+            # PM2 restart
             if command -v pm2 > /dev/null; then
-              pm2 restart all || pm2 start index.js --name backend
+              pm2 restart backend || pm2 start index.js --name backend
+              pm2 save
             else
-              echo "PM2 not found! Please install or use systemd."
+              echo "⚠️ PM2 not found!"
             fi
 
             # Reload nginx
