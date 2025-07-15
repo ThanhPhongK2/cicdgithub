@@ -1,24 +1,78 @@
-name: Deploy to EC2
+name: Deploy Fullstack App to EC2
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main] # thay đổi nếu dùng branch khác
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Deploy via SSH to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
-        debug: true
-        script: |
-          bash ~/deploy.sh
+      # Build Frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Frontend dependencies
+        run: |
+          cd Frontend
+          npm install
+
+      - name: Build Frontend
+        run: |
+          cd Frontend
+          npm run build
+
+      # Upload frontend & backend lên EC2
+      - name: Upload Frontend
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "Frontend/build/*"
+          target: "/tmp/frontend"
+
+      - name: Upload Backend
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "Backend/*"
+          target: "/tmp/backend"
+
+      # SSH để deploy cả frontend và backend
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Deploy Frontend
+            sudo rm -rf /var/www/html/*
+            sudo cp -r /tmp/frontend/* /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html
+
+            # Deploy Backend
+            sudo rm -rf /var/www/backend
+            sudo mkdir -p /var/www/backend
+            sudo cp -r /tmp/backend/* /var/www/backend
+            cd /var/www/backend
+            npm install
+
+            # Restart backend service (PM2 hoặc systemd)
+            if command -v pm2 > /dev/null; then
+              pm2 restart all || pm2 start index.js --name backend
+            else
+              echo "PM2 not found! Please install or use systemd."
+            fi
+
+            # Reload nginx
+            sudo systemctl reload nginx
