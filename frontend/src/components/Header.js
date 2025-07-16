@@ -64,7 +64,7 @@ const Header = () => {
             <div className="flex items-center space-x-2">
               <input
                 type="text"
-                placeholder="🔍 Search products..."
+                placeholder="🔍 Search products here ......"
                 className="px-4 py-2 w-full sm:w-80 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder-gray-400"
               />
               <button className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">
