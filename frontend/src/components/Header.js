@@ -61,14 +61,17 @@ const Header = () => {
                 </Link>
             </div>
 
-            <div className='hidden lg:flex items-center w-full justify-between max-w-sm border rounded-full focus-within:shadow pl-2'>
-                <input type='text' placeholder='search product here...' className='w-full outline-none' onChange={handleSearch} value={search}/>
-                <div className='text-lg min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white'>
-                  <GrSearch />
-                </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="🔍 Search products..."
+                className="px-4 py-2 w-full sm:w-80 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder-gray-400"
+              />
+              <button className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">
+                Search
+              </button>
             </div>
-
-
+            
             <div className='flex items-center gap-7'>
                 
                 <div className='relative flex justify-center'>
