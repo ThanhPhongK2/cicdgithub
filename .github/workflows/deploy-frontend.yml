@@ -1,48 +1,32 @@
-name: Deploy Frontend to EC2
+name: Deploy Frontend
 
 on:
   push:
     paths:
-      - "frontend/**"
-    branches: [main]
+      - 'frontend/**'
+    branches:
+      - main
 
 jobs:
-  deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install & Build
+      - name: Setup SSH
         run: |
-          cd frontend
-          npm install
-          CI=false npm run build
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Upload to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "frontend/build"
-          target: "/tmp"
-
-      - name: Deploy Frontend on EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo rm -rf /var/www/html/*
-            sudo cp -r /tmp/build/* /var/www/html/
-            sudo chown -R www-data:www-data /var/www/html
-            sudo chmod -R 755 /var/www/html
-            ls -l /var/www/html/index.html
-            sudo systemctl reload nginx
+      - name: Deploy frontend via SSH
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/cicdgithub
+            git pull origin main
+            cd frontend
+            npm install
+            NODE_OPTIONS="--max-old-space-size=2048" npm run build
+            pm2 serve build 3000 --name cicd-frontend --update-env
+            pm2 save
+          EOF
