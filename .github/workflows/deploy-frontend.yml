@@ -28,6 +28,7 @@ jobs:
             rm -rf build
             npm install
             NODE_OPTIONS="--max-old-space-size=2048" npm run build
+            pm2 delete cicd-frontend || true
             pm2 serve build 3000 --name cicd-frontend --update-env
             pm2 save
           EOF
