@@ -1,24 +1,31 @@
-      - name: Deploy Backend on EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo ">> Cleanup & Copy Backend..."
-            sudo rm -rf /var/www/backend
-            sudo mkdir -p /var/www/backend
-            sudo cp -r /tmp/backend/* /var/www/backend
-            cd /var/www/backend
+name: Deploy Backend
 
-            echo ">> Install Dependencies..."
-            [ -f package.json ] && npm install || echo "package.json not found!"
+on:
+  push:
+    paths:
+      - 'backend/**'
+    branches:
+      - main
 
-            echo ">> Restart Backend with PM2..."
-            if command -v pm2 > /dev/null; then
-              pm2 restart backend || pm2 start index.js --name backend
-              pm2 save
-              pm2 logs backend --lines 100
-            else
-              echo "PM2 not found! Please install PM2 manually."
-            fi
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend via SSH
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/cicdgithub
+            git pull origin main
+            cd backend
+            npm install
+            pm2 restart cicd-backend || pm2 start index.js --name cicd-backend
+            pm2 save
+          EOF
