@@ -19,3 +19,13 @@
     display: none;
 }
 
+/*** product card effect ***/
+.productCard {
+  @apply rounded-xl bg-white p-4 shadow-md transition-transform duration-300 ease-in-out;
+}
+
+.productCard:hover {
+  @apply scale-105 shadow-xl;
+}
+
+
