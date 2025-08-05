@@ -31,18 +31,18 @@ jobs:
       # ------------------------------
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm install
+        run: npm ci
 
       - name: Create backend .env file
         working-directory: ./server
         run: |
           touch .env
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Start backend with PM2
         working-directory: ./server
         run: |
-          /home/ubuntu/.nvm/versions/node/v22.16.0/bin/pm2 restart backend || /home/ubuntu/.nvm/versions/node/v22.16.0/bin/pm2 start index.js --name backend
+          pm2 restart backend || pm2 start index.js --name backend
 
       # ------------------------------
       # FRONTEND SETUP
@@ -55,19 +55,14 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm install
+        run: npm ci
 
       - name: Create frontend .env file
         working-directory: ./client
         run: |
           touch .env
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
         working-directory: ./client
-        run: npm run build
-
-      - name: Deploy frontend to Nginx
-        run: |
-          sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/dist/* /var/www/html/
+        run
