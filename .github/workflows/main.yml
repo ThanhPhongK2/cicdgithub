@@ -22,12 +22,11 @@ jobs:
           node -v
           npm -v
 
-      # 3. Cài đặt MongoDB (nếu cần)
+      # 3. Cài đặt MongoDB 8.0 (không yêu cầu tương tác)
       - name: Install MongoDB 8.0
         run: |
           sudo apt-get install -y gnupg curl
-          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
-            sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --batch --yes | sudo tee /usr/share/keyrings/mongodb-server-8.0.gpg > /dev/null
           echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | \
             sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
           sudo apt-get update
@@ -52,29 +51,28 @@ jobs:
       - name: Start backend with PM2
         working-directory: ./server
         run: |
-          pm2 start index.js --name node-server || pm2 restart node-server
+          pm2 describe node-server > /dev/null && pm2 restart node-server || pm2 start index.js --name node-server
           pm2 save
 
-     # 6. Cài đặt frontend & build
+      # 6. Cài đặt frontend & build
       - name: Clean npm cache & remove existing dependencies
         working-directory: ./client
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
-      
+
       - name: Install frontend dependencies
         working-directory: ./client
         run: npm install
-      
+
       - name: Create frontend .env file
         working-directory: ./client
         run: |
           printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-      
+
       - name: Build frontend
         working-directory: ./client
         run: npm run build
-
 
       # 7. Cài Nginx và deploy frontend
       - name: Install and configure Nginx
@@ -87,28 +85,29 @@ jobs:
       # 8. Cấu hình Nginx cho frontend + proxy backend
       - name: Update Nginx config
         run: |
-          sudo bash -c 'cat > /etc/nginx/sites-available/default' <<EOF
+          sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
           server {
-            listen 80;
-            server_name your-ec2-public-ip;
+              listen 80;
+              server_name your-ec2-public-ip;
 
-            root /var/www/html;
-            index index.html;
+              root /var/www/html;
+              index index.html;
 
-            location / {
-              try_files \$uri /index.html;
-            }
+              location / {
+                  try_files \$uri /index.html;
+              }
 
-            location /api/ {
-              proxy_pass http://localhost:3000/;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade \$http_upgrade;
-              proxy_set_header Connection 'upgrade';
-              proxy_set_header Host \$host;
-              proxy_cache_bypass \$http_upgrade;
-            }
+              location /api/ {
+                  proxy_pass http://localhost:3000/;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host \$host;
+                  proxy_cache_bypass \$http_upgrade;
+              }
           }
           EOF
+
       # 9. Restart nginx
       - name: Restart Nginx
         run: |
