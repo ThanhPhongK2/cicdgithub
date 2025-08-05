@@ -1,4 +1,4 @@
-name: Deploy Fullstack App on EC2
+name: Deploy MERN App on EC2
 
 on:
   push:
@@ -9,43 +9,40 @@ jobs:
   deploy:
     runs-on: self-hosted
 
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
+      # 1. Checkout source code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: |
-            server/package-lock.json
-            client/package-lock.json
-
-      # ------------------------------
-      # SETUP ENVIRONMENT
-      # ------------------------------
-      - name: Ensure PM2 is installed
-        run: npm install -g pm2
-
-      - name: Load NVM and PM2 to PATH
+      # 2. Cài đặt Node.js
+      - name: Install Node.js 16
         run: |
-          echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.bashrc
-          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.bashrc
-          echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\"" >> ~/.bashrc
-          source ~/.bashrc
-          pm2 -v
+          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          node -v
+          npm -v
 
-      # ------------------------------
-      # BACKEND SETUP
-      # ------------------------------
+      # 3. Cài đặt MongoDB (nếu cần)
+      - name: Install MongoDB 8.0
+        run: |
+          sudo apt-get install -y gnupg curl
+          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+            sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | \
+            sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          sudo apt-get update
+          sudo apt-get install -y mongodb-org
+          sudo systemctl start mongod
+          sudo systemctl enable mongod
+
+      # 4. Cài PM2
+      - name: Install PM2 globally
+        run: sudo npm install -g pm2
+
+      # 5. Cài đặt backend & chạy với PM2
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm ci
+        run: npm install
 
       - name: Create backend .env file
         working-directory: ./server
@@ -55,21 +52,13 @@ jobs:
       - name: Start backend with PM2
         working-directory: ./server
         run: |
-          export PATH=$PATH:$HOME/.nvm/versions/node/v${{ matrix.node-version }}/bin
-          pm2 restart backend || pm2 start index.js --name backend
+          pm2 start index.js --name node-server || pm2 restart node-server
+          pm2 save
 
-      # ------------------------------
-      # FRONTEND SETUP
-      # ------------------------------
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./client
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-
+      # 6. Cài đặt frontend & build
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm install
 
       - name: Create frontend .env file
         working-directory: ./client
@@ -80,13 +69,45 @@ jobs:
         working-directory: ./client
         run: npm run build
 
-      - name: Deploy frontend to Nginx
+      # 7. Cài Nginx và deploy frontend
+      - name: Install and configure Nginx
         run: |
+          sudo apt update
+          sudo apt install -y nginx
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
 
-      - name: Reload Nginx
-        run: sudo systemctl reload nginx
+      # 8. Cấu hình Nginx cho frontend + proxy backend
+      - name: Update Nginx config
+        run: |
+          sudo bash -c 'cat > /etc/nginx/sites-available/default' <<EOF
+          server {
+            listen 80;
+            server_name your-ec2-public-ip;
 
-      - name: Deployment finished
-        run: echo "✅ Deployment completed successfully!"
+            root /var/www/html;
+            index index.html;
+
+            location / {
+              try_files \$uri /index.html;
+            }
+
+            location /api/ {
+              proxy_pass http://localhost:3000/;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade \$http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host \$host;
+              proxy_cache_bypass \$http_upgrade;
+            }
+          }
+EOF
+
+      # 9. Restart nginx
+      - name: Restart Nginx
+        run: |
+          sudo nginx -t
+          sudo systemctl restart nginx
+
+      - name: ✅ Deployment Finished
+        run: echo "🚀 MERN App deployed successfully!"
