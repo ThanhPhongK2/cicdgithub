@@ -49,6 +49,7 @@ jobs:
       - name: Build frontend
         working-directory: ./client
         run: npm run build
+        
       - name: Start backend with PM2
         working-directory: ./server
         run: |
