@@ -53,18 +53,21 @@ jobs:
           pm2 save
 
       # 6. Cài đặt frontend và build
-      - name: Install frontend dependencies
-        working-directory: ./client
-        run: npm install
-
-      - name: Create frontend .env file
-        working-directory: ./client
-        run: |
-          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: Build frontend
-        working-directory: ./client
-        run: npm run build
+        - name: Clean and reinstall frontend dependencies
+          working-directory: ./client
+          run: |
+            rm -rf node_modules package-lock.json
+            npm cache clean --force
+            npm install
+        
+        - name: Create frontend .env file
+          working-directory: ./client
+          run: |
+            printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        
+        - name: Build frontend
+          working-directory: ./client
+          run: npm run build
 
       # 7. Cài đặt và cấu hình Nginx
       - name: Install and configure Nginx
