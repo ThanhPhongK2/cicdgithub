@@ -101,8 +101,7 @@ jobs:
               proxy_cache_bypass \$http_upgrade;
             }
           }
-EOF
-
+          EOF
       # 9. Restart nginx
       - name: Restart Nginx
         run: |
