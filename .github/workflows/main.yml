@@ -46,6 +46,9 @@ jobs:
         run: |
           printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
       - name: Start backend with PM2
         working-directory: ./server
         run: |
