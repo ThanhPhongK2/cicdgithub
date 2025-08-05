@@ -20,6 +20,9 @@ app.get('/api/get', (req, res) => {
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'OK', Message: 'Server is running' });
 });
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', Message: 'Server is alive' });
+});
 
 
 app.listen(PORT, () => {
