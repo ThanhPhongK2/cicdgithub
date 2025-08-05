@@ -10,35 +10,33 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # 1. Checkout source code
+      # 1. Lấy mã nguồn từ repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Cài đặt Node.js
-      - name: Install Node.js 18
+      # 2. Cài đặt Node.js 18
+      - name: Install Node.js
         run: |
           curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
           sudo apt-get install -y nodejs
           node -v
           npm -v
 
-      # 3. Cài đặt MongoDB 8.0 (không yêu cầu tương tác)
-      - name: Install MongoDB 8.0
+      # 3. Cài đặt MongoDB 8.0
+      - name: Install MongoDB
         run: |
           sudo apt-get install -y gnupg curl
           curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --batch --yes | sudo tee /usr/share/keyrings/mongodb-server-8.0.gpg > /dev/null
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | \
-            sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
           sudo apt-get update
           sudo apt-get install -y mongodb-org
-          sudo systemctl start mongod
-          sudo systemctl enable mongod
+          sudo systemctl enable --now mongod
 
-      # 4. Cài PM2
+      # 4. Cài đặt PM2
       - name: Install PM2 globally
         run: sudo npm install -g pm2
 
-      # 5. Cài đặt backend & chạy với PM2
+      # 5. Cài đặt và khởi động backend
       - name: Install backend dependencies
         working-directory: ./server
         run: npm install
@@ -54,13 +52,7 @@ jobs:
           pm2 describe node-server > /dev/null && pm2 restart node-server || pm2 start index.js --name node-server
           pm2 save
 
-      # 6. Cài đặt frontend & build
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./client
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-
+      # 6. Cài đặt frontend và build
       - name: Install frontend dependencies
         working-directory: ./client
         run: npm install
@@ -74,15 +66,14 @@ jobs:
         working-directory: ./client
         run: npm run build
 
-      # 7. Cài Nginx và deploy frontend
+      # 7. Cài đặt và cấu hình Nginx
       - name: Install and configure Nginx
         run: |
-          sudo apt update
-          sudo apt install -y nginx
+          sudo apt-get install -y nginx
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
 
-      # 8. Cấu hình Nginx cho frontend + proxy backend
+      # 8. Cấu hình Nginx: React SPA + proxy backend
       - name: Update Nginx config
         run: |
           sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
@@ -94,8 +85,9 @@ jobs:
               index index.html;
 
               location / {
-                  try_files \$uri /index.html;
+                  try_files \$uri \$uri/ /index.html;
               }
+
               location /api/ {
                   proxy_pass http://localhost:3000/api/;
                   proxy_http_version 1.1;
@@ -107,11 +99,12 @@ jobs:
           }
           EOF
 
-      # 9. Restart nginx
+      # 9. Restart Nginx để áp dụng cấu hình
       - name: Restart Nginx
         run: |
           sudo nginx -t
           sudo systemctl restart nginx
 
+      # 10. Kết thúc
       - name: ✅ Deployment Finished
         run: echo "🚀 MERN App deployed successfully!"
