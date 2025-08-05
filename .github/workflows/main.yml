@@ -10,11 +10,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # 1. Lấy mã nguồn từ repo
+      # 1. Clone repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Cài đặt Node.js 18
+      # 2. Cài Node.js 18
       - name: Install Node.js
         run: |
           curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -22,7 +22,7 @@ jobs:
           node -v
           npm -v
 
-      # 3. Cài đặt MongoDB 8.0
+      # 3. Cài MongoDB (nếu chưa có)
       - name: Install MongoDB
         run: |
           sudo apt-get install -y gnupg curl
@@ -32,19 +32,19 @@ jobs:
           sudo apt-get install -y mongodb-org
           sudo systemctl enable --now mongod
 
-      # 4. Cài đặt PM2
-      - name: Install PM2 globally
+      # 4. Cài PM2 để chạy backend
+      - name: Install PM2
         run: sudo npm install -g pm2
 
-      # 5. Cài đặt và khởi động backend
+      # 5. Cài & chạy backend
       - name: Install backend dependencies
         working-directory: ./server
         run: npm install
 
-      - name: Create backend .env file
+      - name: Inject backend env
         working-directory: ./server
         run: |
-          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Start backend with PM2
         working-directory: ./server
@@ -52,32 +52,32 @@ jobs:
           pm2 describe node-server > /dev/null && pm2 restart node-server || pm2 start index.js --name node-server
           pm2 save
 
-      # 6. Cài đặt frontend và build
-      - name: Clean and reinstall frontend dependencies
+      # 6. Cài & build frontend
+      - name: Clean & install frontend
         working-directory: ./client
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
           npm install
 
-      - name: Create frontend .env file
+      - name: Inject frontend env
         working-directory: ./client
         run: |
-          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
         working-directory: ./client
         run: npm run build
 
-      # 7. Cài đặt và cấu hình Nginx
-      - name: Install and configure Nginx
+      # 7. Cài NGINX & deploy frontend
+      - name: Install & copy frontend to NGINX
         run: |
           sudo apt-get install -y nginx
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
 
-      # 8. Cấu hình Nginx: React SPA + proxy backend
-      - name: Update Nginx config
+      # 8. Cấu hình NGINX proxy đến backend
+      - name: Configure NGINX
         run: |
           sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
           server {
@@ -88,7 +88,7 @@ jobs:
               index index.html;
 
               location / {
-                  try_files \$uri \$uri/ /index.html;
+                  try_files $uri $uri/ /index.html;
               }
 
               location /api/ {
@@ -102,12 +102,12 @@ jobs:
           }
           EOF
 
-      # 9. Restart Nginx để áp dụng cấu hình
-      - name: Restart Nginx
+      # 9. Restart NGINX
+      - name: Restart NGINX
         run: |
           sudo nginx -t
           sudo systemctl restart nginx
 
-      # 10. Kết thúc
-      - name: ✅ Deployment Finished
+      # 10. Done
+      - name: ✅ Done
         run: echo "🚀 MERN App deployed successfully!"
