@@ -1,4 +1,4 @@
-name: Deploy MERN App on EC2
+name: Deploy Fullstack App on EC2
 
 on:
   push:
@@ -9,105 +9,85 @@ jobs:
   deploy:
     runs-on: self-hosted
 
+    strategy:
+      matrix:
+        node-version: [22.x]
+
     steps:
-      # 1. Clone repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Cài Node.js 18
-      - name: Install Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+
+      # ENV SETUP
+      - name: Ensure PM2 is installed
+        run: npm install -g pm2
+
+      - name: Load NVM and PM2 to PATH
         run: |
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          node -v
-          npm -v
+          echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.bashrc
+          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.bashrc
+          echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\"" >> ~/.bashrc
+          source ~/.bashrc
+          pm2 -v
 
-      # 3. Cài MongoDB (nếu chưa có)
-      - name: Install MongoDB
-        run: |
-          sudo apt-get install -y gnupg curl
-          curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | gpg --dearmor --batch --yes | sudo tee /usr/share/keyrings/mongodb-server-8.0.gpg > /dev/null
-          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
-          sudo apt-get update
-          sudo apt-get install -y mongodb-org
-          sudo systemctl enable --now mongod
-
-      # 4. Cài PM2 để chạy backend
-      - name: Install PM2
-        run: sudo npm install -g pm2
-
-      # 5. Cài & chạy backend
+      # BACKEND
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm install
+        run: npm ci
 
-      - name: Inject backend env
+      - name: Create backend .env file
         working-directory: ./server
         run: |
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Start backend with PM2
         working-directory: ./server
         run: |
-          pm2 describe node-server > /dev/null && pm2 restart node-server || pm2 start index.js --name node-server
+          export PATH=$PATH:$HOME/.nvm/versions/node/v${{ matrix.node-version }}/bin
+          pm2 restart backend || pm2 start index.js --name backend
           pm2 save
 
-      # 6. Cài & build frontend
-      - name: Clean & install frontend
+      # FRONTEND
+      - name: Clean npm cache & remove existing dependencies
         working-directory: ./client
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
-          npm install
 
-      - name: Inject frontend env
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Create frontend .env file
         working-directory: ./client
         run: |
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
         working-directory: ./client
         run: npm run build
 
-      # 7. Cài NGINX & deploy frontend
-      - name: Install & copy frontend to NGINX
+      - name: Deploy frontend to Nginx
         run: |
-          sudo apt-get install -y nginx
+          sudo mkdir -p /var/www/html
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
 
-      # 8. Cấu hình NGINX proxy đến backend
-      - name: Configure NGINX
+      - name: Set permissions for Nginx static files
         run: |
-          sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
-          server {
-              listen 80;
-              server_name 43.206.111.4;
+          sudo chown -R www-data:www-data /var/www/html
+          sudo chmod -R 755 /var/www/html
 
-              root /var/www/html;
-              index index.html;
+      - name: Reload Nginx
+        run: sudo systemctl reload nginx
 
-              location / {
-                  try_files $uri $uri/ /index.html;
-              }
-
-              location /api/ {
-                  proxy_pass http://localhost:3000/api/;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection 'upgrade';
-                  proxy_set_header Host \$host;
-                  proxy_cache_bypass \$http_upgrade;
-              }
-          }
-          EOF
-
-      # 9. Restart NGINX
-      - name: Restart NGINX
-        run: |
-          sudo nginx -t
-          sudo systemctl restart nginx
-
-      # 10. Done
-      - name: ✅ Done
-        run: echo "🚀 MERN App deployed successfully!"
+      - name: ✅ Deployment finished
+        run: echo "✅ Deployment completed successfully!"
