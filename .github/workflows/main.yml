@@ -27,6 +27,20 @@ jobs:
             client/package-lock.json
 
       # ------------------------------
+      # SETUP ENVIRONMENT
+      # ------------------------------
+      - name: Ensure PM2 is installed
+        run: npm install -g pm2
+
+      - name: Load NVM and PM2 to PATH
+        run: |
+          echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.bashrc
+          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.bashrc
+          echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\"" >> ~/.bashrc
+          source ~/.bashrc
+          pm2 -v
+
+      # ------------------------------
       # BACKEND SETUP
       # ------------------------------
       - name: Install backend dependencies
@@ -36,12 +50,12 @@ jobs:
       - name: Create backend .env file
         working-directory: ./server
         run: |
-          touch .env
           printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Start backend with PM2
         working-directory: ./server
         run: |
+          export PATH=$PATH:$HOME/.nvm/versions/node/v${{ matrix.node-version }}/bin
           pm2 restart backend || pm2 start index.js --name backend
 
       # ------------------------------
@@ -60,7 +74,6 @@ jobs:
       - name: Create frontend .env file
         working-directory: ./client
         run: |
-          touch .env
           printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
@@ -76,4 +89,4 @@ jobs:
         run: sudo systemctl reload nginx
 
       - name: Deployment finished
-        run: echo "✅ Deploy completed!"
+        run: echo "✅ Deployment completed successfully!"
