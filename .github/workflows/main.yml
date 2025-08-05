@@ -41,7 +41,7 @@ jobs:
       # BACKEND
       - name: Install backend dependencies
         working-directory: ./server
-        run: npm ci
+        run: npm install
 
       - name: Create backend .env file
         working-directory: ./server
@@ -64,7 +64,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm install
 
       - name: Create frontend .env file
         working-directory: ./client
