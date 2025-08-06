@@ -8,6 +8,10 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    env:
+      DOCKER_REPO: thanhphongk2/fullstack-app  # 👈 thay bằng Docker Hub repo của bạn
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,7 +31,7 @@ jobs:
           context: ./client
           file: ./client/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_NAME }}-client:latest
+          tags: ${{ env.DOCKER_REPO }}-client:latest
 
       - name: Build and push server image
         uses: docker/build-push-action@v5
@@ -35,4 +39,4 @@ jobs:
           context: ./server
           file: ./server/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_NAME }}-server:latest
+          tags: ${{ env.DOCKER_REPO }}-server:latest
