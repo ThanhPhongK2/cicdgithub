@@ -1,4 +1,4 @@
-name: CI/CD Docker Multi-Service
+name: CI/CD Workflow
 
 on:
   push:
@@ -6,37 +6,51 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
-    env:
-      DOCKER_REPO: thanhphongk2/fullstack-app  # 👈 thay bằng Docker Hub repo của bạn
+    strategy:
+      matrix:
+        node-version: [20.x]
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          node-version: ${{ matrix.node-version }}
 
-      - name: Build and push client image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./client
-          file: ./client/Dockerfile
-          push: true
-          tags: ${{ env.DOCKER_REPO }}-client:latest
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm ci
 
-      - name: Build and push server image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./server
-          file: ./server/Dockerfile
-          push: true
-          tags: ${{ env.DOCKER_REPO }}-server:latest
+      - name: Build client
+        working-directory: ./client
+        run: npm run build
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run server tests (nếu có)
+        working-directory: ./server
+        run: |
+          if [ -f package.json ] && npm run | grep -q test; then
+            npm test
+          else
+            echo "No test script found, skipping tests."
+          fi
+
+      - name: Docker build & push (tùy chọn, nếu có DockerHub)
+        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker build -t "$DOCKER_USERNAME/app-client" ./client
+          docker build -t "$DOCKER_USERNAME/app-server" ./server
+          docker push "$DOCKER_USERNAME/app-client"
+          docker push "$DOCKER_USERNAME/app-server"
