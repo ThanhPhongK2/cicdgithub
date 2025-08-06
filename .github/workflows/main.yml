@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
 jobs:
   build:
     runs-on: [self-hosted, ec2]
@@ -13,12 +17,13 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: 🧾 Show current user & versions
+      - name: 🧾 Show environment info
         run: |
-          whoami
+          echo "👤 User: $(whoami)"
           node -v
           npm -v
-          pm2 -v || echo "PM2 chưa được cài"
+          docker -v || echo "⚠️ Docker not installed"
+          pm2 -v || echo "⚠️ PM2 not installed"
 
       # CLIENT
       - name: 🧹 Clean and install client dependencies
@@ -30,8 +35,7 @@ jobs:
 
       - name: ⚙️ Create frontend .env file
         working-directory: ./client
-        run: |
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: 🛠️ Build frontend
         working-directory: ./client
@@ -42,33 +46,32 @@ jobs:
         working-directory: ./server
         run: npm install
 
-      - name: 🧪 Run server tests (nếu có)
+      - name: 🧪 Run server tests
         working-directory: ./server
         run: |
           if [ -f package.json ] && npm run | grep -q test; then
             npm test
           else
-            echo "No test script found, skipping tests."
+            echo "ℹ️ No test script found, skipping tests."
           fi
 
       - name: ⚙️ Create backend .env file
         working-directory: ./server
-        run: |
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: 🚀 Start backend with PM2
         working-directory: ./server
         run: |
-          npm install -g pm2
+          if ! command -v pm2 &> /dev/null; then
+            echo "📦 Installing PM2..."
+            npm install -g pm2
+          fi
           pm2 restart backend || pm2 start index.js --name backend
           pm2 save
 
-      # OPTIONAL: Docker (nếu có DockerHub secrets)
-      - name: 🐳 Docker build & push
+      # OPTIONAL: Docker
+      - name: 🐳 Docker build & push (if secrets available)
         if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           docker build -t "$DOCKER_USERNAME/app-client" ./client
@@ -88,12 +91,12 @@ jobs:
       - name: 🔁 Restart or start Nginx
         run: |
           if systemctl is-active --quiet nginx; then
-            echo "Reloading Nginx..."
+            echo "🔁 Reloading Nginx..."
             sudo systemctl reload nginx
           else
-            echo "Starting Nginx..."
+            echo "🚀 Starting Nginx..."
             sudo systemctl start nginx
           fi
 
       - name: ✅ Deployment finished
-        run: echo "✅ Deployment completed successfully!"
+        run: echo "✅ CI/CD Deployment completed successfully!"
