@@ -51,7 +51,7 @@ jobs:
           fi
 
       - name: Docker build & push (tùy chọn, nếu có DockerHub)
-        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -61,3 +61,62 @@ jobs:
           docker build -t "$DOCKER_USERNAME/app-server" ./server
           docker push "$DOCKER_USERNAME/app-client"
           docker push "$DOCKER_USERNAME/app-server"
+
+      # BACKEND
+      - name: Create backend .env file
+        working-directory: ./server
+        run: |
+          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
+
+      - name: Install PM2 globally
+        run: npm install -g pm2
+
+      - name: Start backend with PM2
+        working-directory: ./server
+        run: |
+          pm2 restart backend || pm2 start index.js --name backend
+          pm2 save
+
+      # FRONTEND
+      - name: Clean npm cache & remove existing dependencies
+        working-directory: ./client
+        run: |
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
+
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm install
+
+      - name: Create frontend .env file
+        working-directory: ./client
+        run: |
+          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+
+      - name: Deploy frontend to Nginx
+        run: |
+          sudo mkdir -p /var/www/html
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./client/dist/* /var/www/html/
+
+      - name: Set permissions for Nginx static files
+        run: |
+          sudo chown -R www-data:www-data /var/www/html
+          sudo chmod -R 755 /var/www/html
+
+      - name: Restart or Start Nginx
+        run: |
+          if systemctl is-active --quiet nginx; then
+            echo "🔁 Reloading nginx..."
+            sudo systemctl reload nginx
+          else
+            echo "🚀 Nginx is not active. Starting nginx..."
+            sudo systemctl start nginx
+          fi
+
+      - name: ✅ Deployment finished
+        run: echo "✅ Deployment completed successfully!"
