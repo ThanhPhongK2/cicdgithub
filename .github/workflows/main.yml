@@ -90,19 +90,18 @@ jobs:
           pm2 restart backend || pm2 start index.js --name backend
           pm2 save
 
-      # DOCKER
-      - name: 🐳 Docker build & push
+      - name: 🐳 Docker build & push (if secrets available)
         if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
         run: |
           if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
             echo "Error: Dockerfile missing"
             exit 1
           fi
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          docker build -t "$DOCKER_USERNAME/app-client" ./client
-          docker build -t "$DOCKER_USERNAME/app-server" ./server
-          docker push "$DOCKER_USERNAME/app-client"
-          docker push "$DOCKER_USERNAME/app-server"
+          echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
+          sudo docker build -t "$DOCKER_USERNAME/app-client" ./client
+          sudo docker build -t "$DOCKER_USERNAME/app-server" ./server
+          sudo docker push "$DOCKER_USERNAME/app-client"
+          sudo docker push "$DOCKER_USERNAME/app-server"
 
       # DEPLOY FRONTEND
       - name: 🚚 Deploy frontend to Nginx
