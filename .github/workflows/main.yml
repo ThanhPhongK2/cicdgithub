@@ -17,14 +17,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
 
-      - name: Install client dependencies
+      - name: Clean and install client dependencies
         working-directory: ./client
-        run: npm install
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Force install rollup native binary
+        working-directory: ./client
+        run: |
+          npm install @rollup/rollup-linux-x64-gnu --save-optional
 
       - name: Build client
         working-directory: ./client
