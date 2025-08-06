@@ -1,96 +1,288 @@
 name: CI/CD Workflow
-
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  NODE_VERSION: '18'
 
 jobs:
-  build:
-    runs-on: [self-hosted, ec2]
-
+  # Separate job for linting and testing
+  test:
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🧹 Install client dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: 🧪 Run client tests
+        working-directory: ./client
+        run: |
+          if npm run | grep -q test; then
+            npm test
+          else
+            echo "ℹ️ No client test script found"
+          fi
+
+      - name: 🔍 Lint client code
+        working-directory: ./client
+        run: |
+          if npm run | grep -q lint; then
+            npm run lint
+          else
+            echo "ℹ️ No client lint script found"
+          fi
+
+      - name: 📦 Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: 🧪 Run server tests
+        working-directory: ./server
+        run: |
+          if npm run | grep -q test; then
+            npm test
+          else
+            echo "ℹ️ No server test script found"
+          fi
+
+      - name: 🔍 Lint server code
+        working-directory: ./server
+        run: |
+          if npm run | grep -q lint; then
+            npm run lint
+          else
+            echo "ℹ️ No server lint script found"
+          fi
+
+  # Build and deploy job (only on main branch)
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, ec2]
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
 
       - name: 🧾 Show environment info
         run: |
           echo "👤 User: $(whoami)"
-          node -v
-          npm -v
+          echo "📍 Working directory: $(pwd)"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          node -v || echo "⚠️ Node.js not installed"
+          npm -v || echo "⚠️ npm not installed"
           docker -v || echo "⚠️ Docker not installed"
           pm2 -v || echo "⚠️ PM2 not installed"
 
-      # CLIENT
-      - name: 🧹 Clean and install client dependencies
+      # CLIENT BUILD
+      - name: 🧹 Clean client dependencies
         working-directory: ./client
         run: |
-          rm -rf node_modules package-lock.json
+          rm -rf node_modules package-lock.json dist build
+
+      - name: 📦 Install client dependencies
+        working-directory: ./client
+        run: |
           npm install
           npm install @rollup/rollup-linux-x64-gnu --save-optional
 
       - name: ⚙️ Create frontend .env file
         working-directory: ./client
-        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        run: |
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          echo "✅ Frontend .env created"
 
       - name: 🛠️ Build frontend
         working-directory: ./client
-        run: npm run build
+        run: |
+          npm run build
+          echo "✅ Frontend build completed"
 
-      # SERVER
+      # SERVER SETUP
       - name: 📦 Install server dependencies
         working-directory: ./server
         run: npm install
 
-      - name: 🧪 Run server tests
-        working-directory: ./server
-        run: |
-          if [ -f package.json ] && npm run | grep -q test; then
-            npm test
-          else
-            echo "ℹ️ No test script found, skipping tests."
-          fi
-
       - name: ⚙️ Create backend .env file
         working-directory: ./server
-        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+        run: |
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "✅ Backend .env created"
 
-      - name: 🚀 Start backend with PM2
+      - name: 🔍 Validate server configuration
         working-directory: ./server
+        run: |
+          if [ -f index.js ]; then
+            echo "✅ Server entry point found: index.js"
+          elif [ -f server.js ]; then
+            echo "✅ Server entry point found: server.js"
+          elif [ -f app.js ]; then
+            echo "✅ Server entry point found: app.js"
+          else
+            echo "❌ No server entry point found!"
+            exit 1
+          fi
+
+      # PM2 DEPLOYMENT
+      - name: 🔧 Setup PM2
         run: |
           if ! command -v pm2 &> /dev/null; then
             echo "📦 Installing PM2..."
             npm install -g pm2
           fi
-          pm2 restart backend || pm2 start index.js --name backend
-          pm2 save
+          pm2 update
 
-      # OPTIONAL: Docker
-      - name: 🐳 Docker build & push (if secrets available)
-        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+      - name: 🔄 Deploy backend with PM2
+        working-directory: ./server
         run: |
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          docker build -t "$DOCKER_USERNAME/app-client" ./client
-          docker build -t "$DOCKER_USERNAME/app-server" ./server
-          docker push "$DOCKER_USERNAME/app-client"
-          docker push "$DOCKER_USERNAME/app-server"
+          # Stop existing process gracefully
+          pm2 stop backend 2>/dev/null || echo "ℹ️ No existing backend process"
+          pm2 delete backend 2>/dev/null || echo "ℹ️ No existing backend process to delete"
+          
+          # Start new process
+          pm2 start index.js --name backend
+          pm2 save
+          
+          # Show status
+          pm2 list
+          echo "✅ Backend deployed with PM2"
 
-      # DEPLOY FRONTEND
+      - name: 🏥 Health check backend
+        run: |
+          sleep 5
+          if pm2 show backend | grep -q "online"; then
+            echo "✅ Backend is running"
+          else
+            echo "❌ Backend failed to start"
+            pm2 logs backend --lines 20
+            exit 1
+          fi
+
+      # FRONTEND DEPLOYMENT
       - name: 🚚 Deploy frontend to Nginx
         run: |
+          # Backup current deployment
+          if [ -d /var/www/html ] && [ "$(ls -A /var/www/html)" ]; then
+            sudo mkdir -p /var/www/html-backup
+            sudo cp -r /var/www/html/* /var/www/html-backup/ || true
+          fi
+          
+          # Deploy new version
           sudo mkdir -p /var/www/html
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
+          echo "✅ Frontend deployed to Nginx"
+
+      - name: 🔧 Test Nginx configuration
+        run: |
+          sudo nginx -t
+          echo "✅ Nginx configuration is valid"
 
       - name: 🔁 Restart Nginx
         run: |
-          sudo systemctl restart nginx
+          sudo systemctl reload nginx
+          sudo systemctl status nginx --no-pager -l
+          echo "✅ Nginx reloaded"
 
-      - name: ✅ Deployment finished
-        run: echo "✅ CI/CD Deployment completed successfully!"
+      # DOCKER BUILD (OPTIONAL)
+      - name: 🐳 Docker build & push
+        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+        run: |
+          echo "🔐 Logging into Docker Hub..."
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          
+          # Build with build arguments and labels
+          docker build \
+            --build-arg NODE_VERSION=${{ env.NODE_VERSION }} \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            -t "$DOCKER_USERNAME/app-client:latest" \
+            -t "$DOCKER_USERNAME/app-client:${{ github.sha }}" \
+            ./client
+          
+          docker build \
+            --build-arg NODE_VERSION=${{ env.NODE_VERSION }} \
+            --label "org.opencontainers.image.source=${{ github.repositoryUrl }}" \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            -t "$DOCKER_USERNAME/app-server:latest" \
+            -t "$DOCKER_USERNAME/app-server:${{ github.sha }}" \
+            ./server
+          
+          # Push both tags
+          docker push "$DOCKER_USERNAME/app-client:latest"
+          docker push "$DOCKER_USERNAME/app-client:${{ github.sha }}"
+          docker push "$DOCKER_USERNAME/app-server:latest"
+          docker push "$DOCKER_USERNAME/app-server:${{ github.sha }}"
+          
+          echo "✅ Docker images pushed successfully"
+
+      # CLEANUP
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          # Clean up Docker build cache occasionally
+          if [ $(docker system df -v --format "table {{.Type}}\t{{.Size}}" | grep -c "build cache") -gt 0 ]; then
+            docker builder prune -f --filter until=72h || true
+          fi
+          echo "✅ Cleanup completed"
+
+      # NOTIFICATION
+      - name: 📢 Deployment summary
+        if: always()
+        run: |
+          echo "🎯 Deployment Summary"
+          echo "===================="
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "👤 Author: ${{ github.actor }}"
+          echo "🕐 Time: $(date)"
+          echo ""
+          echo "🔍 Service Status:"
+          pm2 list || echo "❌ PM2 not running"
+          sudo systemctl is-active nginx || echo "❌ Nginx not running"
+          echo ""
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment completed successfully!"
+          else
+            echo "❌ Deployment failed - check logs above"
+          fi
+
+  # Optional: Rollback job
+  rollback:
+    if: failure() && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: [self-hosted, ec2]
+    steps:
+      - name: 🔄 Rollback frontend
+        run: |
+          if [ -d /var/www/html-backup ]; then
+            sudo rm -rf /var/www/html/*
+            sudo cp -r /var/www/html-backup/* /var/www/html/
+            sudo systemctl reload nginx
+            echo "✅ Frontend rolled back to previous version"
+          else
+            echo "⚠️ No backup found for rollback"
+          fi
+
+      - name: 🔄 Rollback backend
+        run: |
+          pm2 restart backend
+          echo "✅ Backend restarted"
