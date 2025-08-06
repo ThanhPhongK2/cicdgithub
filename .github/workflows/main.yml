@@ -61,11 +61,8 @@ jobs:
           docker build -t "$DOCKER_USERNAME/app-server" ./server
           docker push "$DOCKER_USERNAME/app-client"
           docker push "$DOCKER_USERNAME/app-server"
-      # BACKEND
-      - name: Install backend dependencies
-        working-directory: ./server
-        run: npm install
 
+      # BACKEND
       - name: Create backend .env file
         working-directory: ./server
         run: |
@@ -110,7 +107,7 @@ jobs:
         run: |
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
-          
+
       - name: Reload Nginx
         run: |
           if systemctl is-active --quiet nginx; then
@@ -121,4 +118,3 @@ jobs:
 
       - name: ✅ Deployment finished
         run: echo "✅ Deployment completed successfully!"
-
