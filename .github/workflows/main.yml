@@ -1,122 +1,121 @@
 name: CI/CD Workflow
-
 on:
   push:
     branches:
       - main
-
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 jobs:
   build:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [20.x]
-
+    runs-on: self-hosted
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      - name: 🔍 Validate environment
+        run: |
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+            echo "Error: Docker secrets missing"
+            exit 1
+          fi
+          if ! command -v docker &> /dev/null; then
+            echo "Error: Docker not installed"
+            exit 1
+          fi
+          if ! command -v nginx &> /dev/null; then
+            echo "Error: Nginx not installed"
+            exit 1
+          fi
 
-      - name: Clean and install client dependencies
+      - name: 🧾 Show environment info
+        run: |
+          echo "👤 User: $(whoami)"
+          node -v
+          npm -v
+          docker -v
+          pm2 -v || echo "⚠️ PM2 not installed"
+
+      # CLIENT
+      - name: 🔍 Verify client directory
         working-directory: ./client
         run: |
+          if [ ! -f "package.json" ]; then
+            echo "Error: Client package.json missing"
+            exit 1
+          fi
+      - name: 🧹 Clean and install client dependencies
+        working-directory: ./client
+        run: |
+          set -e
           rm -rf node_modules package-lock.json
           npm install
-
-      - name: Force install rollup native binary
-        working-directory: ./client
-        run: |
           npm install @rollup/rollup-linux-x64-gnu --save-optional
-
-      - name: Build client
+      - name: ⚙️ Create frontend .env file
+        working-directory: ./client
+        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+      - name: 🛠️ Build frontend
         working-directory: ./client
         run: npm run build
 
-      - name: Install server dependencies
+      # SERVER
+      - name: 🔍 Verify server directory
+        working-directory: ./server
+        run: |
+          if [ ! -f "package.json" ] || [ ! -f "index.js" ]; then
+            echo "Error: Server package.json or index.js missing"
+            exit 1
+          fi
+      - name: 📦 Install server dependencies
         working-directory: ./server
         run: npm install
-
-      - name: Run server tests (nếu có)
+      - name: 🧪 Run server tests
         working-directory: ./server
         run: |
-          if [ -f package.json ] && npm run | grep -q test; then
+          if [ "$(npm pkg get scripts.test)" != "{}" ]; then
             npm test
           else
-            echo "No test script found, skipping tests."
+            echo "ℹ️ No test script found, skipping tests."
           fi
-
-      - name: Docker build & push (tùy chọn, nếu có DockerHub)
-        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          docker build -t "$DOCKER_USERNAME/app-client" ./client
-          docker build -t "$DOCKER_USERNAME/app-server" ./server
-          docker push "$DOCKER_USERNAME/app-client"
-          docker push "$DOCKER_USERNAME/app-server"
-
-      # BACKEND
-      - name: Create backend .env file
+      - name: ⚙️ Create backend .env file
+        working-directory: ./server
+        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+      - name: 🚀 Start backend with PM2
         working-directory: ./server
         run: |
-          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
-
-      - name: Install PM2 globally
-        run: npm install -g pm2
-
-      - name: Start backend with PM2
-        working-directory: ./server
-        run: |
+          if ! command -v pm2 &> /dev/null; then
+            echo "📦 Installing PM2..."
+            sudo npm install -g pm2
+          fi
           pm2 restart backend || pm2 start index.js --name backend
           pm2 save
 
-      # FRONTEND
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./client
+      - name: 🐳 Docker build & push (if secrets available)
+        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
         run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
+          if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
+            echo "Error: Dockerfile missing"
+            exit 1
+          fi
+          echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
+          sudo docker build -t "$DOCKER_USERNAME/app-client" ./client
+          sudo docker build -t "$DOCKER_USERNAME/app-server" ./server
+          sudo docker push "$DOCKER_USERNAME/app-client"
+          sudo docker push "$DOCKER_USERNAME/app-server"
 
-      - name: Install frontend dependencies
-        working-directory: ./client
-        run: npm install
-
-      - name: Create frontend .env file
-        working-directory: ./client
+      # DEPLOY FRONTEND
+      - name: 🚚 Deploy frontend to Nginx
         run: |
-          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: Build frontend
-        working-directory: ./client
-        run: npm run build
-
-      - name: Deploy frontend to Nginx
-        run: |
+          if [ ! -d ./client/dist ]; then
+            echo "Error: Frontend build output (dist) not found"
+            exit 1
+          fi
           sudo mkdir -p /var/www/html
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
-
-      - name: Set permissions for Nginx static files
-        run: |
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
-
-      - name: Restart or Start Nginx
-        run: |
-          if systemctl is-active --quiet nginx; then
-            echo "🔁 Reloading nginx..."
-            sudo systemctl reload nginx
-          else
-            echo "🚀 Nginx is not active. Starting nginx..."
-            sudo systemctl start nginx
-          fi
-
+      - name: 🔁 Restart Nginx
+        run: sudo systemctl restart nginx
       - name: ✅ Deployment finished
-        run: echo "✅ Deployment completed successfully!"
+        run: echo "✅ CI/CD Deployment completed successfully!"
