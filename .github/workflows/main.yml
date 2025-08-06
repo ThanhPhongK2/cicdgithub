@@ -71,10 +71,12 @@ jobs:
         run: |
           printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
+      - name: Install PM2 globally
+        run: npm install -g pm2
+
       - name: Start backend with PM2
         working-directory: ./server
         run: |
-          export PATH=$PATH:$HOME/.nvm/versions/node/v${{ matrix.node-version }}/bin
           pm2 restart backend || pm2 start index.js --name backend
           pm2 save
 
