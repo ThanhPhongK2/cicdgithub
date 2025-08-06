@@ -71,7 +71,7 @@ jobs:
 
       # OPTIONAL: Docker
       - name: 🐳 Docker build & push (if secrets available)
-        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
         run: |
           echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           docker build -t "$DOCKER_USERNAME/app-client" ./client
@@ -88,15 +88,9 @@ jobs:
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
 
-      - name: 🔁 Restart or start Nginx
+      - name: 🔁 Restart Nginx
         run: |
-          if systemctl is-active --quiet nginx; then
-            echo "🔁 Reloading Nginx..."
-            sudo systemctl reload nginx
-          else
-            echo "🚀 Starting Nginx..."
-            sudo systemctl start nginx
-          fi
+          sudo systemctl restart nginx
 
       - name: ✅ Deployment finished
         run: echo "✅ CI/CD Deployment completed successfully!"
