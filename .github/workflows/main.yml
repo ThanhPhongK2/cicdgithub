@@ -9,39 +9,40 @@ jobs:
   build:
     runs-on: [self-hosted, ec2]
 
-    strategy:
-      matrix:
-        node-version: [20.x]
-
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      - name: 🧾 Show current user & versions
+        run: |
+          whoami
+          node -v
+          npm -v
+          pm2 -v || echo "PM2 chưa được cài"
 
-      - name: Clean and install client dependencies
+      # CLIENT
+      - name: 🧹 Clean and install client dependencies
         working-directory: ./client
         run: |
           rm -rf node_modules package-lock.json
           npm install
-
-      - name: Force install rollup native binary
-        working-directory: ./client
-        run: |
           npm install @rollup/rollup-linux-x64-gnu --save-optional
 
-      - name: Build client
+      - name: ⚙️ Create frontend .env file
+        working-directory: ./client
+        run: |
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+
+      - name: 🛠️ Build frontend
         working-directory: ./client
         run: npm run build
 
-      - name: Install server dependencies
+      # SERVER
+      - name: 📦 Install server dependencies
         working-directory: ./server
         run: npm install
 
-      - name: Run server tests (nếu có)
+      - name: 🧪 Run server tests (nếu có)
         working-directory: ./server
         run: |
           if [ -f package.json ] && npm run | grep -q test; then
@@ -50,8 +51,21 @@ jobs:
             echo "No test script found, skipping tests."
           fi
 
-      - name: Docker build & push (tùy chọn, nếu có DockerHub)
-        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
+      - name: ⚙️ Create backend .env file
+        working-directory: ./server
+        run: |
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+
+      - name: 🚀 Start backend with PM2
+        working-directory: ./server
+        run: |
+          npm install -g pm2
+          pm2 restart backend || pm2 start index.js --name backend
+          pm2 save
+
+      # OPTIONAL: Docker (nếu có DockerHub secrets)
+      - name: 🐳 Docker build & push
+        if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -62,59 +76,22 @@ jobs:
           docker push "$DOCKER_USERNAME/app-client"
           docker push "$DOCKER_USERNAME/app-server"
 
-      # BACKEND
-      - name: Create backend .env file
-        working-directory: ./server
-        run: |
-          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
-
-      - name: Install PM2 globally
-        run: npm install -g pm2
-
-      - name: Start backend with PM2
-        working-directory: ./server
-        run: |
-          pm2 restart backend || pm2 start index.js --name backend
-          pm2 save
-
-      # FRONTEND
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./client
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-
-      - name: Install frontend dependencies
-        working-directory: ./client
-        run: npm install
-
-      - name: Create frontend .env file
-        working-directory: ./client
-        run: |
-          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: Build frontend
-        working-directory: ./client
-        run: npm run build
-
-      - name: Deploy frontend to Nginx
+      # DEPLOY FRONTEND
+      - name: 🚚 Deploy frontend to Nginx
         run: |
           sudo mkdir -p /var/www/html
           sudo rm -rf /var/www/html/*
           sudo cp -r ./client/dist/* /var/www/html/
-
-      - name: Set permissions for Nginx static files
-        run: |
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
 
-      - name: Restart or Start Nginx
+      - name: 🔁 Restart or start Nginx
         run: |
           if systemctl is-active --quiet nginx; then
-            echo "🔁 Reloading nginx..."
+            echo "Reloading Nginx..."
             sudo systemctl reload nginx
           else
-            echo "🚀 Nginx is not active. Starting nginx..."
+            echo "Starting Nginx..."
             sudo systemctl start nginx
           fi
 
