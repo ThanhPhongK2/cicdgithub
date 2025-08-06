@@ -65,7 +65,7 @@ jobs:
 
       # OPTIONAL: Docker (nếu có DockerHub secrets)
       - name: 🐳 Docker build & push
-        if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
+        if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
