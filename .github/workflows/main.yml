@@ -1,4 +1,4 @@
-name: Deploy Fullstack App on EC2
+name: Deploy App to EC2
 
 on:
   push:
@@ -9,85 +9,37 @@ jobs:
   deploy:
     runs-on: self-hosted
 
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: |
-            server/package-lock.json
-            client/package-lock.json
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # ENV SETUP
-      - name: Ensure PM2 is installed
-        run: npm install -g pm2
+      - name: Log in to Docker (if private registry)
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        if: ${{ secrets.DOCKER_USERNAME }}
 
-      - name: Load NVM and PM2 to PATH
+      - name: Build Docker image with tag
         run: |
-          echo "export NVM_DIR=\"$HOME/.nvm\"" >> ~/.bashrc
-          echo "[ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"" >> ~/.bashrc
-          echo "[ -s \"$NVM_DIR/bash_completion\" ] && \. \"$NVM_DIR/bash_completion\"" >> ~/.bashrc
-          source ~/.bashrc
-          pm2 -v
+          export IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+          docker-compose build
+          echo "Built at $IMAGE_TAG"
 
-      # BACKEND
-      - name: Install backend dependencies
-        working-directory: ./server
-        run: npm install
-
-      - name: Create backend .env file
-        working-directory: ./server
+      - name: Stop & remove old container
         run: |
-          printf "%s" "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "Stopping old containers..."
+          docker-compose down || true
 
-      - name: Start backend with PM2
-        working-directory: ./server
+      - name: Run new container
         run: |
-          export PATH=$PATH:$HOME/.nvm/versions/node/v${{ matrix.node-version }}/bin
-          pm2 restart backend || pm2 start index.js --name backend
-          pm2 save
+          echo "Starting new containers..."
+          docker-compose up -d
 
-      # FRONTEND
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./client
+      - name: Check running containers
+        run: docker ps -a
+
+      - name: Check health of app (optional)
         run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-
-      - name: Install frontend dependencies
-        working-directory: ./client
-        run: npm install
-
-      - name: Create frontend .env file
-        working-directory: ./client
-        run: |
-          printf "%s" "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: Build frontend
-        working-directory: ./client
-        run: npm run build
-
-      - name: Deploy frontend to Nginx
-        run: |
-          sudo mkdir -p /var/www/html
-          sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/dist/* /var/www/html/
-
-      - name: Set permissions for Nginx static files
-        run: |
-          sudo chown -R www-data:www-data /var/www/html
-          sudo chmod -R 755 /var/www/html
-
-      - name: Reload Nginx
-        run: sudo systemctl reload nginx
-
-      - name: ✅ Deployment finished
-        run: echo "✅ Deployment completed successfully!"
+          sleep 5
+          curl -f http://localhost:3000/health || (echo "Healthcheck failed!" && exit 1)
