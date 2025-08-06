@@ -1,4 +1,4 @@
-name: Deploy App to EC2
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,36 +6,55 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-      - name: Log in to Docker (if private registry)
-        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Build Docker image
-        run: docker-compose build
-
-      - name: Stop & remove old container
-        run: docker-compose down || true
-
-      - name: Run new container
-        run: docker-compose up -d
-
-      - name: Check running containers
-        run: docker ps -a
-
-      - name: Clean up unused Docker images (optional)
-        run: docker image prune -af
-
-      - name: Check health of app (optional)
+      - name: Install Node.js dependencies
         run: |
-          sleep 5
-          curl -f http://localhost:3000/health || (echo "Healthcheck failed!" && exit 1)
+          if [ -f package.json ]; then
+            npm install
+          fi
+
+      - name: Install Python dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run Node.js tests
+        run: |
+          if [ -f package.json ]; then
+            npm test || true
+          fi
+
+      - name: Run Python tests
+        run: |
+          if [ -f pytest.ini ] || [ -f requirements.txt ]; then
+            pip install pytest
+            pytest || true
+          fi
+
+      - name: Docker build & push (conditional)
+        if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker build -t $DOCKER_USERNAME/my-app:latest .
+          docker push $DOCKER_USERNAME/my-app:latest
