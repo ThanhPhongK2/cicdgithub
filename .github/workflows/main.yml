@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -51,7 +51,7 @@ jobs:
           fi
 
       - name: Docker build & push (tùy chọn, nếu có DockerHub)
-        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
