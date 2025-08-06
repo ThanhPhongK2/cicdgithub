@@ -110,6 +110,7 @@ jobs:
         run: |
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
+          
       - name: Reload Nginx
         run: |
           if systemctl is-active --quiet nginx; then
@@ -117,9 +118,6 @@ jobs:
           else
             echo "⚠️ Nginx is not running, skipping reload."
           fi
-                
-      - name: Reload Nginx
-        run: sudo systemctl reload nginx
 
       - name: ✅ Deployment finished
         run: echo "✅ Deployment completed successfully!"
