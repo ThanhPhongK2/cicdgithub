@@ -71,7 +71,7 @@ jobs:
 
       # OPTIONAL: Docker
       - name: 🐳 Docker build & push (if secrets available)
-        if: secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != ''
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
         run: |
           echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
           docker build -t "$DOCKER_USERNAME/app-client" ./client
