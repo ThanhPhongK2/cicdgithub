@@ -6,93 +6,28 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted # 👈 dùng runner EC2 nếu đã setup
 
     steps:
-      - name: 📥 Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: 🛠️ Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-node-app:latest .
 
-      # --- BUILD FRONTEND ---
-      - name: 💥 Clean cache before install (FE)
-        working-directory: ./client
-        run: rm -rf node_modules package-lock.json
+      - name: Push image to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-node-app:latest
 
-      - name: 📦 Install FE dependencies
-        working-directory: ./client
-        run: npm install
-
-      - name: 🏗️ Build FE
-        working-directory: ./client
-        run: npm run build
-
-      # --- BUILD BACKEND ---
-      - name: 📦 Install BE dependencies
-        working-directory: ./server
-        run: npm install
-
-      # --- DEPLOY TO EC2 ---
-      - name: 🚀 Deploy to EC2 (FE via Nginx, BE via PM2)
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # --- TẠO FOLDER TẠM ---
-            rm -rf ~/deploy-tmp
-            mkdir -p ~/deploy-tmp
-
-      - name: 📤 Upload built frontend & server files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./client/dist,./server"
-          target: "~/deploy-tmp"
-
-      - name: ⚙️ Configure & run on EC2
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # --- DEPLOY FRONTEND ---
-            echo "📂 Deploying Frontend"
-            sudo mkdir -p /var/www/html
-            sudo rm -rf /var/www/html/*
-            sudo cp -r ~/deploy-tmp/dist/* /var/www/html/
-            sudo chown -R www-data:www-data /var/www/html
-            sudo chmod -R 755 /var/www/html
-
-            sudo nginx -t && sudo systemctl reload nginx
-
-            # --- DEPLOY BACKEND ---
-            echo "📂 Deploying Backend"
-            cd ~/deploy-tmp/server
-
-            echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
-
-            if ! command -v pm2 &> /dev/null; then
-              echo "Installing PM2..."
-              sudo npm install -g pm2
-            fi
-
-            pm2 describe backend > /dev/null
-            if [ $? -eq 0 ]; then
-              pm2 restart backend
-            else
-              pm2 start index.js --name backend
-            fi
-
-            pm2 save
-            sudo pm2 startup systemd -u $USER --hp $HOME
-
-      - name: ✅ Done
-        run: echo "🎉 Deployment to EC2 (Nginx + PM2) completed!"
+            docker pull ${{ secrets.DOCKER_USERNAME }}/my-node-app:latest
+            docker stop myapp || true
+            docker rm myapp || true
+            docker run -d --name myapp -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/my-node-app:latest
