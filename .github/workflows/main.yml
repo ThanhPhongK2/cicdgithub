@@ -18,7 +18,11 @@ jobs:
           node-version: 18
 
       # --- BUILD FRONTEND ---
-      - name: 🔧 Install FE dependencies
+      - name: 💥 Clean cache before install (FE)
+        working-directory: ./client
+        run: rm -rf node_modules package-lock.json
+
+      - name: 📦 Install FE dependencies
         working-directory: ./client
         run: npm install
 
