@@ -13,6 +13,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Clean up local changes (optional but useful)
+      run: |
+        cd ~/cicdgithub
+        git reset --hard HEAD
+        git clean -fd
+        
     - name: Stop old containers
       run: |
         cd ~/cicdgithub
