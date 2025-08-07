@@ -113,18 +113,22 @@ jobs:
       # --- DOCKER (optional) ---
 
       - name: 🐳 Docker build & push
-        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
         run: |
-          if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
-            echo "⚠️ Warning: Dockerfile missing. Skipping Docker build."
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
+            echo "⚠️ Skipping Docker build: secrets missing."
             exit 0
           fi
-
+      
+          if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
+            echo "⚠️ Dockerfile missing. Skipping Docker build."
+            exit 0
+          fi
+      
           echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
-
+      
           sudo docker build -t "$DOCKER_USERNAME/app-client" ./client
           sudo docker build -t "$DOCKER_USERNAME/app-server" ./server
-
+      
           sudo docker push "$DOCKER_USERNAME/app-client"
           sudo docker push "$DOCKER_USERNAME/app-server"
 
