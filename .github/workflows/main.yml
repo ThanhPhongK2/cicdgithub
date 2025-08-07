@@ -1,164 +1,94 @@
-name: CI/CD Workflow
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-
-env:
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    branches: [ main ]
 
 jobs:
-  build:
-    runs-on: self-hosted
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: 📥 Checkout Code
         uses: actions/checkout@v3
 
-      - name: 🔍 Validate environment
-        run: |
-          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-            echo "⚠️ Warning: Docker secrets missing, Docker build/push will be skipped."
-          fi
-          if ! command -v docker &> /dev/null; then
-            echo "❌ Error: Docker not installed"
-            exit 1
-          fi
-          if ! command -v nginx &> /dev/null; then
-            echo "❌ Error: Nginx not installed"
-            exit 1
-          fi
+      - name: 🛠️ Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-      - name: 🧾 Show environment info
-        run: |
-          echo "👤 User: $(whoami)"
-          node -v
-          npm -v
-          docker -v
-          pm2 -v || echo "⚠️ PM2 not installed"
-
-      # --- FRONTEND ---
-
-      - name: 🔍 Verify client directory
+      # --- BUILD FRONTEND ---
+      - name: 🔧 Install FE dependencies
         working-directory: ./client
-        run: |
-          if [ ! -f "package.json" ]; then
-            echo "❌ Error: Client package.json missing"
-            exit 1
-          fi
+        run: npm install
 
-      - name: 🧹 Clean and install client dependencies
-        working-directory: ./client
-        run: |
-          set -e
-          rm -rf node_modules package-lock.json
-          npm install
-
-      - name: ⚙️ Create frontend .env file
-        working-directory: ./client
-        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-
-      - name: 🛠️ Build frontend
+      - name: 🏗️ Build FE
         working-directory: ./client
         run: npm run build
 
-      # --- BACKEND ---
-
-      - name: 🔍 Verify server directory
-        working-directory: ./server
-        run: |
-          if [ ! -f "package.json" ] || [ ! -f "index.js" ]; then
-            echo "❌ Error: Server package.json or index.js missing"
-            exit 1
-          fi
-
-      - name: 📦 Install server dependencies
+      # --- BUILD BACKEND ---
+      - name: 📦 Install BE dependencies
         working-directory: ./server
         run: npm install
 
-      - name: 🧪 Run server tests
-        working-directory: ./server
-        run: |
-          test_script=$(npm pkg get scripts.test | tr -d '"')
-          if [ "$test_script" != "undefined" ]; then
-            npm test
-          else
-            echo "ℹ️ No test script found, skipping tests."
-          fi
+      # --- DEPLOY TO EC2 ---
+      - name: 🚀 Deploy to EC2 (FE via Nginx, BE via PM2)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # --- TẠO FOLDER TẠM ---
+            rm -rf ~/deploy-tmp
+            mkdir -p ~/deploy-tmp
 
-      - name: ⚙️ Create backend .env file
-        working-directory: ./server
-        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+      - name: 📤 Upload built frontend & server files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./client/dist,./server"
+          target: "~/deploy-tmp"
 
-      - name: 🚀 Start backend with PM2
-        working-directory: ./server
-        run: |
-          if ! command -v pm2 &> /dev/null; then
-            echo "📦 Installing PM2..."
-            sudo npm install -g pm2
-          fi
+      - name: ⚙️ Configure & run on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # --- DEPLOY FRONTEND ---
+            echo "📂 Deploying Frontend"
+            sudo mkdir -p /var/www/html
+            sudo rm -rf /var/www/html/*
+            sudo cp -r ~/deploy-tmp/dist/* /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html
+            sudo chmod -R 755 /var/www/html
 
-          pm2 describe backend > /dev/null
-          if [ $? -eq 0 ]; then
-            pm2 restart backend
-          else
-            pm2 start index.js --name backend
-          fi
+            sudo nginx -t && sudo systemctl reload nginx
 
-          pm2 save
-          sudo pm2 startup systemd -u $USER --hp $HOME
+            # --- DEPLOY BACKEND ---
+            echo "📂 Deploying Backend"
+            cd ~/deploy-tmp/server
 
-      # --- DOCKER (optional) ---
+            echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
-      - name: 🐳 Docker build & push
-        run: |
-          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-            echo "⚠️ Skipping Docker build: secrets missing."
-            exit 0
-          fi
-      
-          if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
-            echo "⚠️ Dockerfile missing. Skipping Docker build."
-            exit 0
-          fi
-      
-          echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
-      
-          sudo docker build -t "$DOCKER_USERNAME/app-client" ./client
-          sudo docker build -t "$DOCKER_USERNAME/app-server" ./server
-      
-          sudo docker push "$DOCKER_USERNAME/app-client"
-          sudo docker push "$DOCKER_USERNAME/app-server"
+            if ! command -v pm2 &> /dev/null; then
+              echo "Installing PM2..."
+              sudo npm install -g pm2
+            fi
 
-      # --- DEPLOY FRONTEND (Nginx) ---
+            pm2 describe backend > /dev/null
+            if [ $? -eq 0 ]; then
+              pm2 restart backend
+            else
+              pm2 start index.js --name backend
+            fi
 
-      - name: 🚚 Deploy frontend to Nginx
-        run: |
-          if [ ! -d ./client/dist ]; then
-            echo "❌ Error: Frontend build output (dist) not found"
-            exit 1
-          fi
-          sudo mkdir -p /var/www/html
-          sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/dist/* /var/www/html/
-          sudo chown -R www-data:www-data /var/www/html
-          sudo chmod -R 755 /var/www/html
+            pm2 save
+            sudo pm2 startup systemd -u $USER --hp $HOME
 
-      - name: 🔁 Restart Nginx safely
-        run: |
-          sudo nginx -t
-          sudo systemctl restart nginx
-
-      # --- VERIFY DEPLOYMENT ---
-
-      - name: ✅ Check frontend health
-        run: |
-          curl -sf http://localhost || {
-            echo "❌ Frontend not responding!"
-            exit 1
-          }
-          
-      - name: ✅ Deployment finished
-        run: echo "🎉 CI/CD Deployment completed successfully!"
+      - name: ✅ Done
+        run: echo "🎉 Deployment to EC2 (Nginx + PM2) completed!"
