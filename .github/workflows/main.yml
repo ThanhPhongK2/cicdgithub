@@ -1,23 +1,29 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   deploy:
     runs-on: self-hosted
-
     steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v3
-
-      - name: 🐳 Docker Compose Up
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Deploy with Docker Compose
         run: |
-          docker compose down
-          docker compose build
-          docker compose up -d --remove-orphans
+          cd $GITHUB_WORKSPACE
+          docker compose down || true
+          docker compose build || { echo "Build failed"; exit 1; }
+          docker compose up -d --remove-orphans || { echo "Deployment failed"; exit 1; }
           docker image prune -f
-
-      - name: ✅ Done
-        run: echo "🚀 CI/CD hoàn tất!"
+      - name: Check Container Health
+        run: |
+          sleep 10 # Đợi container khởi động
+          if [ "$(docker ps -q)" ]; then
+            echo "Containers are running!"
+            docker ps
+          else
+            echo "No containers are running!"
+            docker ps -a
+            exit 1
+          fi
+          echo "🚀 CI/CD hoàn tất!"
