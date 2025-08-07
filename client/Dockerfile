@@ -1,10 +1,10 @@
-# client/Dockerfile
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
+FROM node:20-alpine
 
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+
+COPY . .
+
+RUN npm install
+RUN npm run build
+
+CMD ["npm", "start"]
