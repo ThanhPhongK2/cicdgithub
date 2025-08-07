@@ -1,14 +1,18 @@
 name: CI/CD Workflow
+
 on:
   push:
     branches:
       - main
+
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
 jobs:
   build:
     runs-on: self-hosted
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v3
@@ -16,15 +20,14 @@ jobs:
       - name: 🔍 Validate environment
         run: |
           if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
-            echo "Error: Docker secrets missing"
-            exit 1
+            echo "⚠️ Warning: Docker secrets missing, Docker build/push will be skipped."
           fi
           if ! command -v docker &> /dev/null; then
-            echo "Error: Docker not installed"
+            echo "❌ Error: Docker not installed"
             exit 1
           fi
           if ! command -v nginx &> /dev/null; then
-            echo "Error: Nginx not installed"
+            echo "❌ Error: Nginx not installed"
             exit 1
           fi
 
@@ -36,50 +39,59 @@ jobs:
           docker -v
           pm2 -v || echo "⚠️ PM2 not installed"
 
-      # CLIENT
+      # --- FRONTEND ---
+
       - name: 🔍 Verify client directory
         working-directory: ./client
         run: |
           if [ ! -f "package.json" ]; then
-            echo "Error: Client package.json missing"
+            echo "❌ Error: Client package.json missing"
             exit 1
           fi
+
       - name: 🧹 Clean and install client dependencies
         working-directory: ./client
         run: |
           set -e
           rm -rf node_modules package-lock.json
           npm install
-          npm install @rollup/rollup-linux-x64-gnu --save-optional
+
       - name: ⚙️ Create frontend .env file
         working-directory: ./client
         run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+
       - name: 🛠️ Build frontend
         working-directory: ./client
         run: npm run build
 
-      # SERVER
+      # --- BACKEND ---
+
       - name: 🔍 Verify server directory
         working-directory: ./server
         run: |
           if [ ! -f "package.json" ] || [ ! -f "index.js" ]; then
-            echo "Error: Server package.json or index.js missing"
+            echo "❌ Error: Server package.json or index.js missing"
             exit 1
           fi
+
       - name: 📦 Install server dependencies
         working-directory: ./server
         run: npm install
+
       - name: 🧪 Run server tests
         working-directory: ./server
         run: |
-          if [ "$(npm pkg get scripts.test)" != "{}" ]; then
+          test_script=$(npm pkg get scripts.test | tr -d '"')
+          if [ "$test_script" != "undefined" ]; then
             npm test
           else
             echo "ℹ️ No test script found, skipping tests."
           fi
+
       - name: ⚙️ Create backend .env file
         working-directory: ./server
         run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+
       - name: 🚀 Start backend with PM2
         working-directory: ./server
         run: |
@@ -87,27 +99,41 @@ jobs:
             echo "📦 Installing PM2..."
             sudo npm install -g pm2
           fi
-          pm2 restart backend || pm2 start index.js --name backend
-          pm2 save
 
-      - name: 🐳 Docker build & push (if secrets available)
-        if: ${{ env.DOCKER_USERNAME && env.DOCKER_PASSWORD }}
+          pm2 describe backend > /dev/null
+          if [ $? -eq 0 ]; then
+            pm2 restart backend
+          else
+            pm2 start index.js --name backend
+          fi
+
+          pm2 save
+          sudo pm2 startup systemd -u $USER --hp $HOME
+
+      # --- DOCKER (optional) ---
+
+      - name: 🐳 Docker build & push
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
         run: |
           if [ ! -f ./client/Dockerfile ] || [ ! -f ./server/Dockerfile ]; then
-            echo "Error: Dockerfile missing"
-            exit 1
+            echo "⚠️ Warning: Dockerfile missing. Skipping Docker build."
+            exit 0
           fi
+
           echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
+
           sudo docker build -t "$DOCKER_USERNAME/app-client" ./client
           sudo docker build -t "$DOCKER_USERNAME/app-server" ./server
+
           sudo docker push "$DOCKER_USERNAME/app-client"
           sudo docker push "$DOCKER_USERNAME/app-server"
 
-      # DEPLOY FRONTEND
+      # --- DEPLOY FRONTEND (Nginx) ---
+
       - name: 🚚 Deploy frontend to Nginx
         run: |
           if [ ! -d ./client/dist ]; then
-            echo "Error: Frontend build output (dist) not found"
+            echo "❌ Error: Frontend build output (dist) not found"
             exit 1
           fi
           sudo mkdir -p /var/www/html
@@ -115,7 +141,27 @@ jobs:
           sudo cp -r ./client/dist/* /var/www/html/
           sudo chown -R www-data:www-data /var/www/html
           sudo chmod -R 755 /var/www/html
-      - name: 🔁 Restart Nginx
-        run: sudo systemctl restart nginx
+
+      - name: 🔁 Restart Nginx safely
+        run: |
+          sudo nginx -t
+          sudo systemctl restart nginx
+
+      # --- VERIFY DEPLOYMENT ---
+
+      - name: ✅ Check frontend health
+        run: |
+          curl -sf http://localhost || {
+            echo "❌ Frontend not responding!"
+            exit 1
+          }
+
+      - name: ✅ Check backend health
+        run: |
+          curl -sf http://localhost:3000/health || {
+            echo "❌ Backend not responding!"
+            exit 1
+          }
+
       - name: ✅ Deployment finished
-        run: echo "✅ CI/CD Deployment completed successfully!"
+        run: echo "🎉 CI/CD Deployment completed successfully!"
