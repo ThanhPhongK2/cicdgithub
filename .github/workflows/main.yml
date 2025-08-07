@@ -8,22 +8,38 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Deploy with Docker Compose
+      - name: Verify Files
+        run: |
+          ls -la $GITHUB_WORKSPACE/client
+          if [ ! -f $GITHUB_WORKSPACE/docker-compose.yml ]; then
+            echo "Error: docker-compose.yml not found"
+            exit 1
+          fi
+          if [ ! -f $GITHUB_WORKSPACE/client/Dockerfile ]; then
+            echo "Error: client/Dockerfile not found"
+            exit 1
+          fi
+          if [ ! -f $GITHUB_WORKSPACE/client/package.json ]; then
+            echo "Error: client/package.json not found"
+            exit 1
+          fi
+      - name: Build and Deploy
         run: |
           cd $GITHUB_WORKSPACE
           docker compose down || true
-          docker compose build || { echo "Build failed"; exit 1; }
+          docker compose build --no-cache frontend || { echo "Frontend build failed"; exit 1; }
           docker compose up -d --remove-orphans || { echo "Deployment failed"; exit 1; }
           docker image prune -f
       - name: Check Container Health
         run: |
-          sleep 10 # Đợi container khởi động
+          sleep 10
           if [ "$(docker ps -q)" ]; then
-            echo "Containers are running!"
+            echo "Containers are running:"
             docker ps
           else
             echo "No containers are running!"
             docker ps -a
+            docker logs $(docker ps -a -q) || true
             exit 1
           fi
           echo "🚀 CI/CD hoàn tất!"
