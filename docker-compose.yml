@@ -1,30 +1,27 @@
-services:
-  mongo:
-    image: mongo:6
-    container_name: mongo
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
+version: '3'
 
-  backend:
-    build:
-      context: ./server
+services:
+  frontend:
+    build: ./client
     ports:
       - "3000:3000"
-    env_file:
-      - ./server/.env
-    depends_on:
-      - mongo
+    environment:
+      - VITE_API_URL=http://13.115.154.90/api
     restart: always
 
-  frontend:
-    build:
-      context: ./client
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - "80:80"
+    depends_on:
+      - frontend
+      - backend
     restart: always
-
-volumes:
-  mongo-data:
