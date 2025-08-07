@@ -16,7 +16,7 @@ jobs:
     - name: Stop old containers
       run: |
         cd ~/cicdgithub
-        docker-compose down
+        docker compose down
 
     - name: Pull latest code
       run: |
@@ -26,4 +26,4 @@ jobs:
     - name: Rebuild and restart containers
       run: |
         cd ~/cicdgithub
-        docker-compose up --build -d
+        docker compose up --build -d
