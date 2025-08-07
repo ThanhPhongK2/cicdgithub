@@ -20,6 +20,12 @@ jobs:
       - name: Push Docker image
         run: docker push thanhphongkm20/app-server:latest
 
+      - name: Build Docker image for client
+        run: docker build -t thanhphongkm20/app-client ./client
+
+      - name: Push Docker image for client
+        run: docker push thanhphongkm20/app-client:latest
+
   deploy:
     needs: build
     runs-on: self-hosted  # 💡 EC2 cần đăng ký self-hosted runner
@@ -39,3 +45,12 @@ jobs:
 
       - name: Run Docker container
         run: docker run -d -p 5000:5000 --name nodejs-app-container thanhphongkm20/app-server:latest
+
+      - name: Pull image for client
+        run: docker pull thanhphongkm20/app-client:latest
+
+      - name: Stop old client container
+        run: docker rm -f react-client-container || true
+
+      - name: Run client container
+        run: docker run -d -p 3000:3000 --name react-client-container thanhphongkm20/app-client:latest
