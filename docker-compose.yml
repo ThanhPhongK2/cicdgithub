@@ -3,10 +3,10 @@ services:
   frontend:
     build:
       context: ./client
+      dockerfile: Dockerfile
     ports:
       - "80:80"
-    restart: always
-
+    restart: no # Temporarily disable restart for debugging
   backend:
     build:
       context: ./server
@@ -14,4 +14,4 @@ services:
       - ./server/.env
     ports:
       - "3000:3000"
-    restart: always
+    restart: no # Temporarily disable restart
