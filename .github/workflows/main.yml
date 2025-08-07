@@ -1,45 +1,29 @@
-name: CI/CD Pipeline
+name: CICD
+
 on:
   push:
-    branches: [ main ]
+    branches: [cicd-docker-ec2]
+
 jobs:
-  deploy:
-    runs-on: self-hosted
+  build:
+    runs-on: [ubuntu-latest]
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Verify Files
-        run: |
-          ls -la $GITHUB_WORKSPACE/client
-          if [ ! -f $GITHUB_WORKSPACE/docker-compose.yml ]; then
-            echo "Error: docker-compose.yml not found"
-            exit 1
-          fi
-          if [ ! -f $GITHUB_WORKSPACE/client/Dockerfile ]; then
-            echo "Error: client/Dockerfile not found"
-            exit 1
-          fi
-          if [ ! -f $GITHUB_WORKSPACE/client/package.json ]; then
-            echo "Error: client/package.json not found"
-            exit 1
-          fi
-      - name: Build and Deploy
-        run: |
-          cd $GITHUB_WORKSPACE
-          docker compose down || true
-          docker compose build --no-cache frontend || { echo "Frontend build failed"; exit 1; }
-          docker compose up -d --remove-orphans || { echo "Deployment failed"; exit 1; }
-          docker image prune -f
-      - name: Check Container Health
-        run: |
-          sleep 10
-          if [ "$(docker ps -q)" ]; then
-            echo "Containers are running:"
-            docker ps
-          else
-            echo "No containers are running!"
-            docker ps -a
-            docker logs $(docker ps -a -q) || true
-            exit 1
-          fi
-          echo "🚀 CI/CD hoàn tất!"
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Login to docker hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }} 
+      - name: Build docker image
+        run: docker build -t integrationninjas/nodejs-app .
+      - name: Publish image to docker hub
+        run: docker push integrationninjas/nodejs-app:latest
+        
+  deploy:
+    needs: build
+    runs-on: [aws-ec2]
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull integrationninjas/nodejs-app:latest
+      - name: Delete old container
+        run: docker rm -f nodejs-app-container
+      - name: Run docker container
+        run: docker run -d -p 5000:5000 --name nodejs-app-container integrationninjas/nodejs-app
