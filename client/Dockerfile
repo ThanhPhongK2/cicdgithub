@@ -1,9 +1,16 @@
-FROM node:18.20.8 AS builder
+# Dockerfile (trong /client)
+FROM node:18 AS build
+
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+COPY package*.json ./
 RUN npm install
+
 COPY . .
 RUN npm run build
 
+# Serve build bằng nginx
 FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
