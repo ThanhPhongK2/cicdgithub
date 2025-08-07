@@ -15,7 +15,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Build Docker image
-        run: docker build -t integrationninjas/nodejs-app .
+        run: docker build -t integrationninjas/nodejs-app ./server 
 
       - name: Push Docker image
         run: docker push integrationninjas/nodejs-app:latest
