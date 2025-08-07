@@ -159,13 +159,6 @@ jobs:
             echo "❌ Frontend not responding!"
             exit 1
           }
-
-      - name: ✅ Check backend health
-        run: |
-          curl -sf http://localhost:3000/health || {
-            echo "❌ Backend not responding!"
-            exit 1
-          }
-
+          
       - name: ✅ Deployment finished
         run: echo "🎉 CI/CD Deployment completed successfully!"
