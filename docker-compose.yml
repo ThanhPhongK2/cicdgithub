@@ -10,8 +10,8 @@ services:
   backend:
     build:
       context: ./server
-    ports:
-      - "3000:3000"
     env_file:
       - ./server/.env
+    ports:
+      - "3000:3000"
     restart: always
