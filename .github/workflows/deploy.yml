@@ -11,11 +11,13 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build and deploy with docker-compose
-
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
+          cd /home/ubuntu/actions-runner/_work/cicdgithub/cicdgithub
+          echo "Using MONGO_URI=$MONGO_URI"
+          echo "Using JWT_SECRET=$JWT_SECRET"
           docker compose down
           docker compose build --no-cache
           docker compose up -d
