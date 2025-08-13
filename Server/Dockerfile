@@ -1,16 +1,20 @@
-FROM node:18
+FROM node:20
 
 WORKDIR /app
 
-# Copy server files
-COPY package*.json ./
+# Copy server và client code
+COPY ./server ./server
+COPY ./client ./client
+
+# Cài dependencies cho server
+WORKDIR /app/server
 RUN npm install
 
-# Copy server source
-COPY . .
+# Cài dependencies cho client
+WORKDIR /app/client
+RUN npm install
+RUN npm run build  # nếu client là React/Vue
 
-# Copy build client vào thư mục public
-COPY ./public ./public
-
-EXPOSE 3000
-CMD ["node", "index.js"]
+# Chạy cả server và client
+WORKDIR /app/server
+CMD ["sh", "-c", "npm start & serve -s ../client/build -l 3001"]
