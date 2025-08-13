@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: mydockeruser/my-app
+  IMAGE_NAME: thanhphongkm20/thanhphongkm20
   IMAGE_TAG: latest
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       # 4. Deploy container trên EC2 (vì runner là EC2 nên chạy trực tiếp)
       - name: 🚀 Deploy container
         run: |
-          docker stop my-app || true
-          docker rm my-app || true
+          docker stop thanhphongkm20 || true
+          docker rm thanhphongkm20 || true
           docker pull $IMAGE_NAME:$IMAGE_TAG
-          docker run -d -p 3000:3000 --name my-app $IMAGE_NAME:$IMAGE_TAG
+          docker run -d -p 3000:3000 --name thanhphongkm20 $IMAGE_NAME:$IMAGE_TAG
