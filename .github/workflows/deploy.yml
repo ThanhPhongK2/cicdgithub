@@ -25,10 +25,10 @@ jobs:
         working-directory: ./Server
 
       # 1. Code review (Lint + Test)
-      
+
       - name: 🧪 Run Tests
         run: npm test
-        working-directory: ./Server
+        working-directory: ./client
 
       # 2. Build Docker image
       - name: 🐳 Build Docker image
