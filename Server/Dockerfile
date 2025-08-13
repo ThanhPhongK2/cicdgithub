@@ -1,10 +1,8 @@
-FROM node:20
-
+# backend Dockerfile
+FROM node:20-alpine
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm install
 COPY . .
-
 EXPOSE 3000
-CMD ["npm", "start"]  # đổi index.js thành file server chính của bạn
+CMD ["node", "index.js"]
