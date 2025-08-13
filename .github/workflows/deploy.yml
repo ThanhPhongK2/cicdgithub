@@ -20,19 +20,23 @@ jobs:
         run: npm install
         working-directory: ./client   
 
-      # 1. Code review (Lint + Test)
-      - name: 📋 Install dependencies
+      - name: 📋 Install server dependencies
         run: npm install
+        working-directory: ./Server
+
+      # 1. Code review (Lint + Test)
 
       - name: 🔍 Run Linter
         run: npm run lint
+        working-directory: ./Server
 
       - name: 🧪 Run Tests
         run: npm test
+        working-directory: ./Server
 
       # 2. Build Docker image
       - name: 🐳 Build Docker image
-        run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG ./Server
 
       # 3. Push image lên Docker Hub
       - name: 🔑 Login to Docker Hub
