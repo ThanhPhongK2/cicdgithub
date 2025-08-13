@@ -7,4 +7,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 3000
-CMD ["node", "index.js"]  # đổi index.js thành file server chính của bạn
+CMD ["npm", "start"]  # đổi index.js thành file server chính của bạn
