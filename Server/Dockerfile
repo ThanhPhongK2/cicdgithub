@@ -1,7 +1,16 @@
-FROM node:18-alpine
+FROM node:18
+
 WORKDIR /app
+
+# Copy server files
 COPY package*.json ./
 RUN npm install
+
+# Copy server source
 COPY . .
-EXPOSE 5000
-CMD ["npm", "start"]
+
+# Copy build client vào thư mục public
+COPY ../client/build ./public
+
+EXPOSE 3000
+CMD ["node", "index.js"]
