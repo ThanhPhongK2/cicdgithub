@@ -16,6 +16,10 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
+      - name: 📋 Install dependencies
+        run: npm install
+        working-directory: ./client   
+
       # 1. Code review (Lint + Test)
       - name: 📋 Install dependencies
         run: npm install
