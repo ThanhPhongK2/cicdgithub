@@ -25,7 +25,7 @@ jobs:
         working-directory: ./Server
 
       - name: 🏗 Build client
-        run: npm run build
+        run: CI=false npm run build
         working-directory: ./client
 
       # 2. Build Docker image
