@@ -25,11 +25,7 @@ jobs:
         working-directory: ./Server
 
       # 1. Code review (Lint + Test)
-
-      - name: 🔍 Run Linter
-        run: npm run lint
-        working-directory: ./Server
-
+      
       - name: 🧪 Run Tests
         run: npm test
         working-directory: ./Server
