@@ -58,8 +58,8 @@ jobs:
           echo "🧹 Dọn dẹp Docker..."
           docker system prune -af --volumes || true
 
-          echo "🧹 Dọn thư mục GitHub Actions work..."
-          rm -rf /home/ubuntu/actions-runner/_work/* || true
+          echo "🧹 Dọn thư mục repo cũ..."
+          rm -rf /home/ubuntu/actions-runner/_work/${{ github.repository }} || true
 
           echo "🧹 Dọn package cache..."
           sudo apt-get clean
