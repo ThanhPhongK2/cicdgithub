@@ -34,7 +34,7 @@ jobs:
       - name: 🐳 Build Docker image
         run: docker build -t $IMAGE_NAME:$IMAGE_TAG ./Server
 
-      # 3. Push image lên Docker Hub
+      # 3. Push image lên Docker Hub      
       - name: 🔑 Login to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -52,3 +52,17 @@ jobs:
           docker pull $IMAGE_NAME:$IMAGE_TAG
           docker run -d -p 3000:3000 --name thanhphongkm20 $IMAGE_NAME:$IMAGE_TAG
 
+      # 5. Cleanup sau khi build & deploy
+      - name: 🧹 Cleanup disk space
+        run: |
+          echo "🧹 Dọn dẹp Docker..."
+          docker system prune -af --volumes || true
+
+          echo "🧹 Dọn thư mục GitHub Actions work..."
+          rm -rf /home/ubuntu/actions-runner/_work/* || true
+
+          echo "🧹 Dọn package cache..."
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+          echo "✅ Cleanup hoàn tất!"
