@@ -22,16 +22,16 @@ jobs:
         working-directory: ./client
 
       # 3. Build backend (Node.js)
-      - name: Build server
+      - name: Build Server
         run: |
           npm install
-        working-directory: ./server
+        working-directory: ./Server
 
       # 4. Build Docker images (nếu dùng Docker)
       - name: Build Docker images
         run: |
           docker build -t myuser/client:latest ./client
-          docker build -t myuser/server:latest ./server
+          docker build -t myuser/Server:latest ./server
 
       # 5. Login Docker (nếu cần push)
       - name: Docker login
@@ -44,12 +44,12 @@ jobs:
       - name: Push Docker images
         run: |
           docker push myuser/client:latest
-          docker push myuser/server:latest
+          docker push myuser/Server:latest
 
       # 7. Start/restart backend with pm2
       - name: Restart backend
         run: |
-          cd ~/cicdgithub/server
+          cd ~/cicdgithub/Server
           npm install
           pm2 start index.js --name backend --update-env || pm2 restart backend
           pm2 save
