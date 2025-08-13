@@ -1,14 +1,16 @@
 version: '3.8'
-
 services:
-  server:
-    build: ./server
-    ports:
-      - "3000:3000"
-    restart: always
-
-  client:
+  frontend:
     build: ./client
     ports:
-      - "3001:80"
+      - "80:80"
+    restart: always
+
+  backend:
+    build: ./Server
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
     restart: always
