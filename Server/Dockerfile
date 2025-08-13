@@ -1,8 +1,9 @@
-# backend Dockerfile
-FROM node:20-alpine
+FROM node:18
+
 WORKDIR /app
 COPY package*.json ./
+RUN node -v
+RUN npm -v
 RUN npm install
 COPY . .
-EXPOSE 3000
-CMD ["node", "index.js"]
+RUN npm run build
