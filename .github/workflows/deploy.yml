@@ -51,3 +51,4 @@ jobs:
           docker rm thanhphongkm20 || true
           docker pull $IMAGE_NAME:$IMAGE_TAG
           docker run -d -p 3000:3000 --name thanhphongkm20 $IMAGE_NAME:$IMAGE_TAG
+
