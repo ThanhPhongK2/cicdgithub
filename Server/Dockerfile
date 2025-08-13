@@ -10,7 +10,7 @@ RUN npm install
 COPY . .
 
 # Copy build client vào thư mục public
-COPY ../client/build ./public
+COPY ./public ./public
 
 EXPOSE 3000
 CMD ["node", "index.js"]
