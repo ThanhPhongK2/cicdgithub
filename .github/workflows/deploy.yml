@@ -19,15 +19,15 @@ jobs:
       # Build & push frontend
       - name: Build & Push Frontend
         run: |
-          cd frontend
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
+          cd client
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
       # Build & push backend
       - name: Build & Push Backend
         run: |
-          cd backend
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
+          cd Server
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
       # Deploy on EC2
@@ -36,4 +36,3 @@ jobs:
           cd /home/ubuntu/app
           docker-compose pull
           docker-compose up -d --remove-orphans
-          docker image prune -f
