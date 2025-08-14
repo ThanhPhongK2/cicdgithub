@@ -4,7 +4,7 @@ services:
     image: thanhphongkm20/backend:latest
     ports:
       - "5000:5000"
-      
+
     environment:
       - MONGO_DB=mongodb+srv://thanhphong044756:Tp044756@phongdeptrai.ehcg02t.mongodb.net/phongdeptrai
       - JWT_SECRET=8703A2DBD13455AA55F6861A32CB8DA8
@@ -13,5 +13,5 @@ services:
   frontend:
     image: thanhphongkm20/frontend:latest
     ports:
-      - "3000:3000"
+      - "80:80"
     restart: always
