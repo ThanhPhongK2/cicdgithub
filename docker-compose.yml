@@ -1,17 +1,15 @@
 version: "3.9"
 services:
-  server:
-    build: ./Server
-    container_name: my-server
+  backend:
+    image: thanhphongkm20/backend:latest
     ports:
       - "5000:5000"
     environment:
       - MONGO_DB=mongodb+srv://thanhphong044756:Tp044756@phongdeptrai.ehcg02t.mongodb.net/phongdeptrai
     restart: always
 
-  client:
-    build: ./client
-    container_name: my-client
+  frontend:
+    image: thanhphongkm20/frontend:latest
     ports:
       - "3000:3000"
     restart: always

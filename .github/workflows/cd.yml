@@ -9,15 +9,26 @@ on:
       - main   
 
 jobs:
-
-  build:
-
+  deploy:
     runs-on: self-hosted
 
     steps:
-    - name: Pull Docker image
-      run: sudo docker pull thanhphongkm20/thanhphongkm20:latest
-    - name: Delete Old docker container
-      run: sudo docker rm -f thanhphongkm20-container || true
-    - name: Run Docker Container
-      run: sudo docker run -d -p 8080:8080 --name thanhphongkm20-container thanhphongkm20/thanhphongkm20
+      - name: Pull Backend image
+        run: docker pull thanhphongkm20/backend:latest
+
+      - name: Pull Frontend image
+        run: docker pull thanhphongkm20/frontend:latest
+
+      - name: Remove old containers
+        run: |
+          docker rm -f backend-container || true
+          docker rm -f frontend-container || true
+
+      - name: Run Backend container
+        run: docker run -d --name backend-container -p 5000:5000 \
+               -e MONGO_DB="mongodb+srv://thanhphong044756:Tp044756@phongdeptrai.ehcg02t.mongodb.net/phongdeptrai" \
+               thanhphongkm20/backend:latest
+
+      - name: Run Frontend container
+        run: docker run -d --name frontend-container -p 3000:3000 \
+               thanhphongkm20/frontend:latest
