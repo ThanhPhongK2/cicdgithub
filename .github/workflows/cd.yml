@@ -6,15 +6,16 @@ on:
     types:
       - completed
     branches:
-      - main   
+      - main
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-      - name: Clean Docker space
-        run: docker system prune -af --volumes || true
+      - name: Clean Docker space before deploy
+        run: |
+          docker system prune -af --volumes || true
 
       - name: Pull Backend image
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
@@ -26,7 +27,7 @@ jobs:
         run: |
           docker rm -f backend-container || true
           docker run -d --name backend-container -p 5000:5000 \
-            -e MONGO_DB="mongodb+srv://..." \
+            -e MONGO_DB="${{ secrets.MONGO_DB }}" \
             ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
       - name: Restart Frontend container
