@@ -38,5 +38,6 @@ jobs:
       - name: Deploy on EC2
         run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
+          docker-compose down
           docker-compose pull
           docker-compose up -d --remove-orphans
