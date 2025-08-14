@@ -18,12 +18,19 @@ jobs:
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
-    - name: Debug workspace
-      run: pwd && ls -la
-    - name: Build the Docker image
-      run: docker build -t thanhphongkm20/thanhphongkm20 .
-    - name: Push to Dockerhub
-      run: docker push thanhphongkm20/thanhphongkm20:tagname
+    # Build backend
+    - name: Build backend image
+      run: docker build -t thanhphongkm20/backend:latest -f Server/Dockerfile Server
 
+    - name: Push backend image
+      run: docker push thanhphongkm20/backend:latest
+
+    # Build frontend
+    - name: Build frontend image
+      run: docker build -t thanhphongkm20/frontend:latest -f client/Dockerfile client
+
+    - name: Push frontend image
+      run: docker push thanhphongkm20/frontend:latest
+      
     - name: Cleanup workspace
       run: rm -rf ${{ runner.workspace }}/*
