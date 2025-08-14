@@ -14,12 +14,13 @@ jobs:
 
     steps:
 
-      - name: Free disk space
+      - name: Aggressive Docker cleanup
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker stop $(docker ps -aq) || true
+          docker rm -f $(docker ps -aq) || true
+          docker rmi -f $(docker images -aq) || true
+          docker volume prune -f
+          docker builder prune -af
 
       - name: Cleanup old Docker data
         run: docker system prune -af --volumes
