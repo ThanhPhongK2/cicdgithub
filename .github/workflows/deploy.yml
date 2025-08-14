@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -17,21 +17,25 @@ jobs:
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       # Build & push frontend
-      - name: Build & Push Frontend
+      - name: Build frontend image
         run: |
           cd client
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
       # Build & push backend
-      - name: Build & Push Backend
+      - name: Build backend image
         run: |
           cd Server
           docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
-      # Deploy on EC2
-      - name: Deploy with Docker Compose
+  deploy:
+    runs-on: self-hosted
+    needs: build-and-deploy
+
+    steps:
+      - name: Deploy on EC2
         run: |
           cd /home/ubuntu/app
           docker-compose pull
