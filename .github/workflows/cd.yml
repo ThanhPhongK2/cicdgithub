@@ -13,6 +13,14 @@ jobs:
     runs-on: self-hosted
 
     steps:
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Pull Backend image
         run: docker pull thanhphongkm20/backend:latest
 
