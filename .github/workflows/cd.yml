@@ -13,17 +13,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
-
-      - name: Aggressive Docker cleanup
+      - name: Clean up unused Docker data
         run: |
-          docker stop $(docker ps -aq) || true
-          docker rm -f $(docker ps -aq) || true
-          docker rmi -f $(docker images -aq) || true
+          docker container prune -f
+          docker image prune -af --filter "until=24h"
           docker volume prune -f
-          docker builder prune -af
-
-      - name: Cleanup old Docker data
-        run: docker system prune -af --volumes
 
       - name: Pull Backend image
         run: docker pull thanhphongkm20/backend:latest
