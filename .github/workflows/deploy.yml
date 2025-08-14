@@ -1,0 +1,46 @@
+name: Build & Deploy to EC2 with Docker Hub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Build & push frontend
+    - name: Build frontend image
+      run: docker build -t yourdockerhubusername/frontend:latest ./client
+
+    - name: Push frontend image
+      run: |
+        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+        docker push yourdockerhubusername/frontend:latest
+
+    # Build & push backend
+    - name: Build backend image
+      run: docker build -t yourdockerhubusername/backend:latest ./Server
+
+    - name: Push backend image
+      run: |
+        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+        docker push yourdockerhubusername/backend:latest
+
+    # Deploy trên EC2
+    - name: Deploy containers
+      run: |
+        docker pull yourdockerhubusername/frontend:latest
+        docker pull yourdockerhubusername/backend:latest
+
+        docker stop frontend || true
+        docker rm frontend || true
+        docker stop backend || true
+        docker rm backend || true
+
+        docker run -d --name frontend -p 80:80 yourdockerhubusername/frontend:latest
+        docker run -d --name backend -p 5000:5000 yourdockerhubusername/backend:latest

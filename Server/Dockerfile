@@ -1,12 +1,7 @@
-# Stage 1: Build
-FROM node:20-alpine AS build
+FROM node:18
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 COPY . .
-
-# Stage 2: Run
-FROM node:20-alpine
-WORKDIR /app
-COPY --from=build /app .
-CMD ["node", "index.js"]
+EXPOSE 5000
+CMD ["npm", "start"]
