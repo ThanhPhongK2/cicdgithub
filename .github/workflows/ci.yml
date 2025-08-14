@@ -18,6 +18,13 @@ jobs:
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
     # Build backend
     - name: Build backend image
       run: docker build -t thanhphongkm20/backend:latest -f Server/Dockerfile Server
@@ -32,5 +39,7 @@ jobs:
     - name: Push frontend image
       run: docker push thanhphongkm20/frontend:latest
       
-    - name: Cleanup workspace
-      run: rm -rf ${{ runner.workspace }}/*
+    - name: Cleanup temp files
+      run: |
+        docker system prune -af
+        rm -rf Server/node_modules client/node_modules
