@@ -1,9 +1,11 @@
-FROM node:18
+FROM node:16
 
-WORKDIR /app
+WORKDIR /usr/src/app
+
 COPY package*.json ./
-RUN node -v
-RUN npm -v
 RUN npm install
+
 COPY . .
-RUN npm run build
+
+EXPOSE 8080
+CMD ["node", "index.js"]

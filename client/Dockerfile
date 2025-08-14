@@ -1,22 +1,13 @@
-FROM node:16-alpine
+FROM node:16
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy only package files first (better caching)
 COPY package*.json ./
+RUN npm install
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy the rest of the application code
 COPY . .
 
-# Environment variables
-ENV NODE_ENV=production
+RUN npm run build
 
-# Expose port
-EXPOSE 8080
-
-# Run the app
-CMD ["node", "index.js"]
+EXPOSE 3000
+CMD ["npm", "start"]
