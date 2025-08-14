@@ -1,4 +1,4 @@
-name: Build & Deploy to EC2 with Docker Hub
+name: CI/CD with Docker
 
 on:
   push:
@@ -6,41 +6,34 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: self-hosted
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Build & push frontend
-    - name: Build frontend image
-      run: docker build -t yourdockerhubusername/frontend:latest ./client
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Push frontend image
-      run: |
-        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-        docker push yourdockerhubusername/frontend:latest
+      # Build & push frontend
+      - name: Build & Push Frontend
+        run: |
+          cd frontend
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-    # Build & push backend
-    - name: Build backend image
-      run: docker build -t yourdockerhubusername/backend:latest ./Server
+      # Build & push backend
+      - name: Build & Push Backend
+        run: |
+          cd backend
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
-    - name: Push backend image
-      run: |
-        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-        docker push yourdockerhubusername/backend:latest
-
-    # Deploy trên EC2
-    - name: Deploy containers
-      run: |
-        docker pull yourdockerhubusername/frontend:latest
-        docker pull yourdockerhubusername/backend:latest
-
-        docker stop frontend || true
-        docker rm frontend || true
-        docker stop backend || true
-        docker rm backend || true
-
-        docker run -d --name frontend -p 80:80 yourdockerhubusername/frontend:latest
-        docker run -d --name backend -p 5000:5000 yourdockerhubusername/backend:latest
+      # Deploy on EC2
+      - name: Deploy with Docker Compose
+        run: |
+          cd /home/ubuntu/app
+          docker-compose pull
+          docker-compose up -d --remove-orphans
+          docker image prune -f
