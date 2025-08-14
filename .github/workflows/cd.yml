@@ -13,28 +13,24 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Clean up unused Docker data
-        run: |
-          docker container prune -f
-          docker image prune -af --filter "until=24h"
-          docker volume prune -f
+      - name: Clean Docker space
+        run: docker system prune -af --volumes || true
 
       - name: Pull Backend image
-        run: docker pull thanhphongkm20/backend:latest
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
       - name: Pull Frontend image
-        run: docker pull thanhphongkm20/frontend:latest
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
-      - name: Remove old containers
+      - name: Restart Backend container
         run: |
           docker rm -f backend-container || true
+          docker run -d --name backend-container -p 5000:5000 \
+            -e MONGO_DB="mongodb+srv://..." \
+            ${{ secrets.DOCKER_USERNAME }}/backend:latest
+
+      - name: Restart Frontend container
+        run: |
           docker rm -f frontend-container || true
-
-      - name: Run Backend container
-        run: docker run -d --name backend-container -p 5000:5000 \
-               -e MONGO_DB="mongodb+srv://thanhphong044756:Tp044756@phongdeptrai.ehcg02t.mongodb.net/phongdeptrai" \
-               thanhphongkm20/backend:latest
-
-      - name: Run Frontend container
-        run: docker run -d --name frontend-container -p 3000:3000 \
-               thanhphongkm20/frontend:latest
+          docker run -d --name frontend-container -p 3000:3000 \
+            ${{ secrets.DOCKER_USERNAME }}/frontend:latest

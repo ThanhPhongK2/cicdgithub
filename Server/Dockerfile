@@ -2,10 +2,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --only=production
 COPY . .
-RUN npm run build
 
-# Stage 2: Serve static
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
+# Stage 2: Run
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app .
+CMD ["node", "index.js"]
