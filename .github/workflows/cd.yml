@@ -21,6 +21,9 @@ jobs:
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
+      - name: Cleanup old Docker data
+        run: docker system prune -af --volumes
+
       - name: Pull Backend image
         run: docker pull thanhphongkm20/backend:latest
 
