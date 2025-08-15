@@ -18,10 +18,12 @@ jobs:
 
       - name: Clean old Docker resources
         run: |
+          cd /home/ubuntu/actions-runner/_work/cicdgithub
           docker container prune -f
           docker image prune -af
           docker volume prune -f
-          docker system prune -a -f --volumes
+          docker network prune -f
+          docker system prune -af --volumes
 
       # Build & push frontend
       - name: Build frontend image
@@ -45,6 +47,8 @@ jobs:
       - name: Deploy on EC2
         run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
-          docker-compose down
+
+          docker-compose down --remove-orphans
           docker-compose pull
-          docker-compose up -d --remove-orphans
+          docker-compose up -d
+          docker system prune -af --volumes
