@@ -88,13 +88,18 @@ jobs:
     steps:
       - run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
-          # Stop and remove containers
+          echo "Stopping old containers..."
           docker-compose down --remove-orphans
-          # Force remove old images to free space
+
+          echo "Removing old images..."
           docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/frontend") || true
           docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/backend") || true
-          docker system prune -af --volumes
-          # Pull latest images
+
+          echo "Pulling new images..."
           docker-compose pull
-          # Start containers
+
+          echo "Starting new containers..."
           docker-compose up -d
+
+          echo "Cleaning unused resources..."
+          docker system prune -af --volumes
