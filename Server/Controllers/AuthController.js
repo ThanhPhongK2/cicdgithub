@@ -10,7 +10,7 @@ export const registerUser = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     let pass = password.toString();
-    const hashedPass = await bcrypt.hash(pass, parseInt(salt));
+    const hashedPass = await bcrypt.hash(pass, salt);
     req.body.password = hashedPass;
 
     const newUser = new UserModel(req.body);
@@ -49,7 +49,7 @@ export const loginUser = async (req, res) => {
             if (!validity) {
                 res.status(400).json("Soory, Please enter the correct email or password!");
             } else {
-                const token = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_KEY);
+                const token = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_SECRET);
                 res.status(200).json({ user, token });
             }
         } else {
