@@ -18,7 +18,7 @@ jobs:
 
       - name: Clean old Docker resources
         run: |
-          cd /home/ubuntu/actions-runner/_work/cicdgithub
+          
           docker container prune -f
           docker image prune -af
           docker volume prune -f
