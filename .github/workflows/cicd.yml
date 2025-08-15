@@ -90,7 +90,9 @@ jobs:
           cd /home/ubuntu/actions-runner/_work/cicdgithub
           # Stop and remove containers
           docker-compose down --remove-orphans
-          # Remove unused images & volumes before pulling
+          # Force remove old images to free space
+          docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/frontend") || true
+          docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/backend") || true
           docker system prune -af --volumes
           # Pull latest images
           docker-compose pull
