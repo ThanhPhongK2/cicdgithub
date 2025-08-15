@@ -6,6 +6,17 @@ on:
       - main
 
 jobs:
+  test:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Install dependencies
+          run: |
+            cd Server
+            npm install
+            npm run lint
+            npm test
+
   build-and-deploy:
     runs-on: ubuntu-latest
 
