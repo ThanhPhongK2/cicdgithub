@@ -27,6 +27,12 @@ app.use('/user', UserRoute);
 app.use('/post', PostRoute);
 app.use('/upload', UploadRoute);
 
+// Route test root
+app.get('/', (req, res) => {
+  res.send('Backend API is running');
+});
+
+
 // Database & Server start
 mongoose
   .connect(process.env.MONGO_DB, {
@@ -41,7 +47,4 @@ mongoose
   })
   .catch((error) => {
     console.error('❌ Database connection error:', error);
-  });
-  router.get('/', (req, res) => {
-    res.send('Auth API is running');
   });
