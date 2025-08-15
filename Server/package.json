@@ -7,7 +7,7 @@
   "scripts": {
       "start": "nodemon index.js",
       "lint": "eslint . --ext .js --max-warnings=0",
-      "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests --detectOpenHandles",
+      "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests --detectOpenHandles --coverage",
       "build": "echo 'Build success'"
   },
   "author": "",
