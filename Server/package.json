@@ -5,10 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon index.js",
-    "lint": "eslint . --ext .js --max-warnings=0",
-    "test": "jest --passWithNoTests --detectOpenHandles",
-    "build": "echo '✅ Backend build success'"
+      "start": "nodemon index.js",
+      "lint": "eslint . --ext .js --max-warnings=0",
+      "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests --detectOpenHandles",
+      "build": "echo 'Build success'"
   },
   "author": "",
   "license": "ISC",
