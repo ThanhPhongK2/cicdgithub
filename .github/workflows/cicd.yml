@@ -37,13 +37,21 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
+      - run: cd Server && npm install
+
+      # Chạy test và tạo coverage
       - run: cd Server && npm test
+
+      # Kiểm tra file coverage tồn tại
       - name: Check coverage file
         run: |
           if [ ! -f Server/coverage/coverage-summary.json ]; then
             echo "❌ Coverage file not found!"
+            ls -R Server || true
             exit 1
           fi
+
+      # Kiểm tra % coverage
       - name: Enforce coverage threshold
         run: |
           COVERAGE=$(jq '.total.lines.pct' Server/coverage/coverage-summary.json)
