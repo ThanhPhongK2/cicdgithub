@@ -49,7 +49,7 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
     const id = req.params.id;
 
-    const { _id, password } = req.body;
+    // const { _id, password } = req.body;
 
     if (id === _id) {
 

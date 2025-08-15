@@ -10,6 +10,7 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
+        ...globals.jest,
         ...globals.node
       }
     },
@@ -22,3 +23,4 @@ export default [
     }
   }
 ];
+
