@@ -30,7 +30,7 @@ jobs:
       - name: Install backend deps
         run: |
           cd Server
-          npm ci
+          npm install
 
       - name: Run ESLint
         run: |
@@ -59,7 +59,7 @@ jobs:
       - name: Install backend deps
         run: |
           cd Server
-          npm ci
+          npm install
 
       - name: Run tests with coverage
         run: |
@@ -99,5 +99,5 @@ jobs:
       - name: Install frontend deps & build
         run: |
           cd client
-          npm ci
+          npm install
           npm run build
