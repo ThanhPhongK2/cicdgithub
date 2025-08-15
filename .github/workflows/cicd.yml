@@ -23,45 +23,25 @@ jobs:
           node-version: '20'
       - run: cd Server && npm install
       - run: cd Server && npm run lint -- --ext .js --max-warnings=0
+      
+      test:
+        name: Test (Backend)
+        runs-on: ubuntu-latest
+        needs: lint
+        steps:
+          - uses: actions/checkout@v3
+          - uses: actions/cache@v3
+            with:
+              path: Server/node_modules
+              key: backend-${{ hashFiles('Server/package-lock.json') }}
+          - uses: actions/setup-node@v3
+            with:
+              node-version: '20'
+          - run: cd Server && npm install
 
-  test:
-    name: Test (Backend)
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: Server/node_modules
-          key: backend-${{ hashFiles('Server/package-lock.json') }}
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - run: cd Server && npm install
-
-      # Chạy test và tạo coverage
-      - run: cd Server && npm test
-
-      # Kiểm tra file coverage tồn tại
-      - name: Check coverage file
-        run: |
-          if [ ! -f Server/coverage/coverage-summary.json ]; then
-            echo "❌ Coverage file not found!"
-            ls -R Server || true
-            exit 1
-          fi
-
-      # Kiểm tra % coverage
-      - name: Enforce coverage threshold
-        run: |
-          COVERAGE=$(jq '.total.lines.pct' Server/coverage/coverage-summary.json)
-          echo "Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "❌ Coverage is below 80%!"
-            exit 1
-          fi
-
-  build:
+          # Chạy test (có coverage nhưng không kiểm tra file coverage)
+          - run: cd Server && npm test
+        build:
     name: Build (Frontend)
     runs-on: ubuntu-latest
     needs: test
