@@ -12,6 +12,12 @@ dotenv.config();
 
 const app = express();
 
+app.use(cors({
+  origin: 'http://13.231.252.154', // frontend URL
+  credentials: true
+}));
+
+
 // Serve static files
 app.use(express.static('public'));
 app.use('/images', express.static('images'));
