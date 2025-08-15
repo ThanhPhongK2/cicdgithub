@@ -88,7 +88,11 @@ jobs:
     steps:
       - run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
+          # Stop and remove containers
           docker-compose down --remove-orphans
-          docker-compose pull
-          docker-compose up -d
+          # Remove unused images & volumes before pulling
           docker system prune -af --volumes
+          # Pull latest images
+          docker-compose pull
+          # Start containers
+          docker-compose up -d
