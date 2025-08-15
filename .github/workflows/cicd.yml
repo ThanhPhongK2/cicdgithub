@@ -37,21 +37,13 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - run: cd Server && npm install
-      # Chạy test tạo coverage
-      - name: Run tests with coverage
-        run: cd Server && npm test -- --coverage --detectOpenHandles
-        env:
-          NODE_OPTIONS: --experimental-vm-modules
-      # Check file coverage
+      - run: cd Server && npm test
       - name: Check coverage file
         run: |
           if [ ! -f Server/coverage/coverage-summary.json ]; then
             echo "❌ Coverage file not found!"
-            ls -R Server || true
             exit 1
           fi
-      # Check % coverage
       - name: Enforce coverage threshold
         run: |
           COVERAGE=$(jq '.total.lines.pct' Server/coverage/coverage-summary.json)
