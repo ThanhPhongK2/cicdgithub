@@ -1,0 +1,42 @@
+name: CI - Test & Lint
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  ci-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Step 1: Lint
+      - name: Run ESLint
+        run: |
+          cd Server
+          npm install
+          npm run lint
+
+      # Step 2: Unit Test
+      - name: Run Unit Tests
+        run: |
+          cd Server
+          npm test
+
+      # Step 3: Build Test Frontend
+      - name: Test build frontend
+        run: |
+          cd client
+          npm install
+          npm run build
