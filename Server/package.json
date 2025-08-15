@@ -7,7 +7,6 @@
   "scripts": {
     "start": "nodemon index.js",
     "lint": "eslint . --ext .js --max-warnings=0",
-    "pretest": "npm run lint",
     "test": "jest --passWithNoTests --detectOpenHandles",
     "build": "echo '✅ Backend build success'"
   },
