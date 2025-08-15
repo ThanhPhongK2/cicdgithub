@@ -42,7 +42,6 @@ export const getUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   const id = req.params.id;
 
-  // eslint-disable-next-line no-unused-vars
   const { _id, password } = req.body;
 
   if (id === _id) {
