@@ -115,10 +115,6 @@ jobs:
           docker builder prune -af
           docker system prune -af --volumes
 
-          sudo journalctl --vacuum-time=3d || true
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-
           echo "Pulling new images with tag ${GITHUB_SHA}..."
           GITHUB_SHA=${GITHUB_SHA} docker-compose pull
 
