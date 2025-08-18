@@ -87,13 +87,12 @@ jobs:
     needs: build-and-deploy
     steps:
       - run: |
-          cd /home/ubuntu/actions-runner/_work/cicdgithub
           echo "Stopping old containers..."
           docker-compose down --remove-orphans
 
           echo "Removing old images..."
-          docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/frontend") || true
-          docker rmi -f $(docker images -q "${{ secrets.DOCKER_USERNAME }}/backend") || true
+          docker images -q "${{ secrets.DOCKER_USERNAME }}/frontend" | xargs -r docker rmi -f
+          docker images -q "${{ secrets.DOCKER_USERNAME }}/backend" | xargs -r docker rmi -f
 
           echo "Pulling new images..."
           docker-compose pull
@@ -101,5 +100,5 @@ jobs:
           echo "Starting new containers..."
           docker-compose up -d
 
-          echo "Cleaning unused resources..."
-          docker system prune -af --volumes
+          echo "Cleaning unused resources (no volumes)..."
+          docker system prune -af
