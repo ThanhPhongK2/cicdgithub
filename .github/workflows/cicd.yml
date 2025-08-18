@@ -101,7 +101,6 @@ jobs:
     runs-on: self-hosted
     needs: build-and-deploy
     steps:
-
       - name: Deploy Docker containers
         run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
@@ -109,11 +108,12 @@ jobs:
           echo "Stopping old containers..."
           sudo docker-compose down --remove-orphans
 
-          echo "Pulling new images with tag ${GITHUB_SHA}..."
-          sudo docker-compose pull
+          echo "Pulling new images with tag $GITHUB_SHA..."
+          export GITHUB_SHA=${GITHUB_SHA}
+          sudo -E docker-compose pull
 
           echo "Starting new containers..."
-          sudo docker-compose up -d --force-recreate
+          sudo -E docker-compose up -d --force-recreate
 
           echo "Cleaning dangling images..."
           sudo docker image prune -f --filter "dangling=true"
