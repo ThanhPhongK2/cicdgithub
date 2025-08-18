@@ -110,25 +110,28 @@ jobs:
           echo "Stopping old containers..."
           docker-compose down --remove-orphans
 
-          echo "Cleaning unused containers..."
+          echo "Cleaning system before pulling new images..."
+          # Clean npm cache
+          npm cache clean --force
+
+          # Clean runner diagnostics
+          rm -rf ~/actions-runner/_diag/*
+
+          # Clean temp files
+          sudo rm -rf /tmp/*
+
+          # Prune Docker objects
           docker container prune -f
-
-          echo "Cleaning dangling images..."
           docker image prune -f --filter "dangling=true"
-
-          echo "Cleaning unused volumes and networks..."
           docker volume prune -f
           docker network prune -f
-
-          # Optional: clean build cache to free space
-          docker builder prune -f
+          docker builder prune -af
 
           echo "Pulling new images with tag ${GITHUB_SHA}..."
-          # Chỉ pull image cần thiết, tránh pull lại toàn bộ layers đã có
           docker-compose pull
 
           echo "Starting new containers..."
-          docker-compose up -d
+          docker-compose up -d --force-recreate
 
           echo "Cleaning dangling images again after deploy..."
           docker image prune -f --filter "dangling=true"
