@@ -107,19 +107,18 @@ jobs:
       - run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
 
+          echo "Stopping old containers..."
           docker-compose down --remove-orphans
-          docker container prune -f
-          docker image prune -af
-          docker volume prune -f
-          docker network prune -f
-          docker builder prune -af
-          docker system prune -af --volumes
 
-          echo "Pulling new images with tag ${GITHUB_SHA}..."
-          GITHUB_SHA=${GITHUB_SHA} docker-compose pull
+          echo "Cleaning unused containers/images..."
+          docker container prune -f
+          docker image prune -af --filter "dangling=true"
+
+          echo "Pulling new images..."
+          docker-compose pull
 
           echo "Starting new containers..."
-          GITHUB_SHA=${GITHUB_SHA} docker-compose up -d --force-recreate
+          docker-compose up -d --force-recreate
 
-          echo "Cleaning unused images again..."
-          docker image prune -af
+          echo "Cleaning dangling images again..."
+          docker image prune -f --filter "dangling=true"
