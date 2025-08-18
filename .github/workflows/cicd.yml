@@ -115,7 +115,6 @@ jobs:
           docker builder prune -af
           docker system prune -af --volumes
 
-          echo "Cleaning OS logs & caches..."
           sudo journalctl --vacuum-time=3d || true
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
