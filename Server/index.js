@@ -17,6 +17,8 @@ app.use(cors({
   credentials: true
 }));
 
+console.log("🚀 Backend deployed successfully at", new Date().toLocaleString());
+
 
 // Serve static files
 app.use(express.static('public'));
@@ -27,11 +29,25 @@ app.use(bodyParser.json({ limit: '30mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }));
 app.use(cors());
 
+  app.use((req, res, next) => {
+  res.setHeader("X-Backend-Version", "1.0.1");
+  next();
+});
+
 // Routes
 app.use('/auth', AuthRoute);
 app.use('/user', UserRoute);
 app.use('/post', PostRoute);
 app.use('/upload', UploadRoute);
+
+// Route version check
+app.get('/version', (req, res) => {
+  res.json({
+    status: 'ok',
+    version: '1.0.1', // mỗi lần push code có thể đổi số này
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Route test root
 app.get('/', (req, res) => {
@@ -56,3 +72,4 @@ mongoose
   });
 
   export default app;
+
