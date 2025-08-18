@@ -44,7 +44,7 @@ app.use('/upload', UploadRoute);
 app.get('/version', (req, res) => {
   res.json({
     status: 'ok',
-    version: '1.0.1',
+    version: '1.0.0.0',
     timestamp: new Date().toISOString(),
   });
 });
