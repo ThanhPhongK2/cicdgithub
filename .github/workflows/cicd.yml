@@ -101,8 +101,6 @@ jobs:
     runs-on: self-hosted
     needs: build-and-deploy
     steps:
-      - name: Set env
-        run: echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Deploy Docker containers
         run: |
