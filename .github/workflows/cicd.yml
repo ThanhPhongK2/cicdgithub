@@ -112,7 +112,10 @@ jobs:
 
           echo "Cleaning unused containers/images..."
           docker container prune -f
-          docker image prune -af --filter "dangling=true"
+          docker image prune -f --filter "dangling=true"
+          docker volume prune -f
+          docker network prune -f
+          docker builder prune -af
 
           echo "Pulling new images..."
           docker-compose pull
