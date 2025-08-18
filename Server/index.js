@@ -40,15 +40,13 @@ app.use('/user', UserRoute);
 app.use('/post', PostRoute);
 app.use('/upload', UploadRoute);
 
-// Route version check
-app.get('/version', (req, res) => {
+app.get('/api/version', (req, res) => {
   res.json({
     status: 'ok',
-    version: '1.0.1', // mỗi lần push code có thể đổi số này
+    version: '1.0.1',
     timestamp: new Date().toISOString(),
   });
 });
-
 // Route test root
 app.get('/', (req, res) => {
   res.send('Backend API is running');
