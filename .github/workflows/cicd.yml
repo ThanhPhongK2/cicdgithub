@@ -110,10 +110,10 @@ jobs:
 
           echo "Pulling new images with tag $GITHUB_SHA..."
           export GITHUB_SHA=${GITHUB_SHA}
-          sudo -E docker-compose pull
+          sudo docker-compose pull
 
           echo "Starting new containers..."
-          sudo -E docker-compose up -d --force-recreate
+          sudo docker-compose up -d --force-recreate
 
           echo "Cleaning dangling images..."
           sudo docker image prune -f --filter "dangling=true"
