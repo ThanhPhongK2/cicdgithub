@@ -29,7 +29,8 @@ app.use(bodyParser.json({ limit: '30mb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '30mb', extended: true }));
 app.use(cors());
 
-  app.use((req, res, next) => {
+// Gắn header version cho mọi request
+app.use((req, res, next) => {
   res.setHeader("X-Backend-Version", "1.0.1");
   next();
 });
@@ -40,13 +41,14 @@ app.use('/user', UserRoute);
 app.use('/post', PostRoute);
 app.use('/upload', UploadRoute);
 
-app.get('/api/version', (req, res) => {
+app.get('/version', (req, res) => {
   res.json({
     status: 'ok',
     version: '1.0.1',
     timestamp: new Date().toISOString(),
   });
 });
+
 // Route test root
 app.get('/', (req, res) => {
   res.send('Backend API is running');
