@@ -74,11 +74,11 @@ jobs:
 
       - name: Clean old Docker resources
         run: |
-          docker container prune -f
-          docker image prune -af
-          docker volume prune -f
-          docker network prune -f
-          docker system prune -af --volumes
+          sudo docker system prune -af --volumes
+          sudo docker container prune -f
+          sudo docker image prune -af
+          sudo docker volume prune -f
+          sudo docker network prune -f
 
       - name: Build frontend image
         run: |
@@ -111,24 +111,11 @@ jobs:
           echo "Stopping old containers..."
           sudo docker-compose down --remove-orphans
 
-          echo "Cleaning system before pulling new images..."
-          npm cache clean --force
-          rm -rf ~/actions-runner/_diag/*
-          sudo rm -rf /tmp/*
-
-          echo "Pruning Docker objects..."
-          sudo docker container prune -f
-          sudo docker image prune -f --filter "dangling=true"
-          sudo docker volume prune -f
-          sudo docker network prune -f
-          # docker builder prune có thể bỏ nếu quá nặng
-          # sudo docker builder prune -af
-
           echo "Pulling new images with tag ${GITHUB_SHA}..."
           sudo docker-compose pull
 
           echo "Starting new containers..."
           sudo docker-compose up -d --force-recreate
 
-          echo "Cleaning dangling images again after deploy..."
+          echo "Cleaning dangling images..."
           sudo docker image prune -f --filter "dangling=true"
