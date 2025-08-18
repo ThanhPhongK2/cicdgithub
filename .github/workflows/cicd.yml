@@ -83,34 +83,38 @@ jobs:
       - name: Build frontend image
         run: |
           cd client
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/frontend
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
 
       - name: Build backend image
         run: |
           cd Server
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/backend
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ github.sha }} .
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
 
   deploy:
     name: Deploy on EC2
     runs-on: self-hosted
     needs: build-and-deploy
     steps:
+      - name: Set env
+        run: echo "GITHUB_SHA=${{ github.sha }}" >> $GITHUB_ENV
+
       - run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
+
           echo "Stopping old containers..."
           docker-compose down --remove-orphans
 
-          echo "Removing old images..."
-          docker images -q "${{ secrets.DOCKER_USERNAME }}/frontend" | xargs -r docker rmi -f
-          docker images -q "${{ secrets.DOCKER_USERNAME }}/backend" | xargs -r docker rmi -f
-
-          echo "Pulling new images..."
-          docker-compose pull
+          echo "Pulling new images with tag ${GITHUB_SHA}..."
+          GITHUB_SHA=${GITHUB_SHA} docker-compose pull
 
           echo "Starting new containers..."
-          docker-compose up -d
+          GITHUB_SHA=${GITHUB_SHA} docker-compose up -d --force-recreate
 
-          echo "Cleaning unused resources..."
-          docker system prune -af --volumes
+          echo "Cleaning unused images..."
+          docker image prune -af

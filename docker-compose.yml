@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   backend:
-    image: thanhphongkm20/backend:latest
+    image: thanhphongkm20/backend:${GITHUB_SHA}
     ports:
       - "5000:5000"
 
@@ -11,7 +11,7 @@ services:
     restart: always
 
   frontend:
-    build: ./client
+    image: thanhphongkm20/frontend:${GITHUB_SHA}
     ports:
       - "80:80"
     restart: always
