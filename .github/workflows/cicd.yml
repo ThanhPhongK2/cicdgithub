@@ -110,15 +110,19 @@ jobs:
           echo "Stopping old containers..."
           docker-compose down --remove-orphans
 
-          echo "Removing old images..."
-          docker rmi -f $(docker images -q ${{ secrets.DOCKER_USERNAME }}/frontend || true)
-          docker rmi -f $(docker images -q ${{ secrets.DOCKER_USERNAME }}/backend || true)
-
-          echo "Cleaning disk..."
-          docker system prune -af --volumes || true
+          echo "Cleaning old Docker resources before pulling..."
+          docker container prune -f
+          docker image prune -af
+          docker volume prune -f
+          docker network prune -f
+          docker builder prune -af
+          docker system prune -af --volumes
 
           echo "Pulling new images with tag ${GITHUB_SHA}..."
           GITHUB_SHA=${GITHUB_SHA} docker-compose pull
 
           echo "Starting new containers..."
           GITHUB_SHA=${GITHUB_SHA} docker-compose up -d --force-recreate
+
+          echo "Cleaning unused images again..."
+          docker image prune -af
