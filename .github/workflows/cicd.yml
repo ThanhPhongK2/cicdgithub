@@ -87,6 +87,7 @@ jobs:
     needs: build-and-deploy
     steps:
       - run: |
+          cd /home/ubuntu/actions-runner/_work/cicdgithub
           echo "Stopping old containers..."
           docker-compose down --remove-orphans
 
@@ -100,5 +101,5 @@ jobs:
           echo "Starting new containers..."
           docker-compose up -d
 
-          echo "Cleaning unused resources (no volumes)..."
-          docker system prune -af
+          echo "Cleaning unused resources..."
+          docker system prune -af --volumes
