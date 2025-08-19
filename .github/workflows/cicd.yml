@@ -102,6 +102,8 @@ jobs:
     needs: build-and-deploy
     steps:
       - name: Deploy Docker containers
+        env:
+          GITHUB_SHA: ${{ github.sha }} 
         run: |
           cd /home/ubuntu/actions-runner/_work/cicdgithub
 
