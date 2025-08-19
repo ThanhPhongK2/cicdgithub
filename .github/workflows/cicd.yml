@@ -101,6 +101,12 @@ jobs:
     runs-on: self-hosted
     needs: build-and-deploy
     steps:
+      - name: Create .env file
+        run: |
+          cd /home/ubuntu/actions-runner/_work/cicdgithub
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > Server/.env
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > client/.env
+          
       - name: Deploy Docker containers
         env:
           GITHUB_SHA: ${{ github.sha }} 

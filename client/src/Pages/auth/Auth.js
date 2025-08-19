@@ -57,7 +57,7 @@ const Auth = () => {
       <div className="a-left">
         <img src={Logo} alt="Logo" />
         <div className="Webname">
-          <h2>Welcome to web!</h2>
+          <h2>Welcome</h2>
           <h5>
             Explore the ideas throughout <br /> the world.
           </h5>
