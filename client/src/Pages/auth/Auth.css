@@ -110,7 +110,7 @@
   font-style: italic;
   font-weight: bold;
   letter-spacing: 2px;
-  background: linear-gradient(90deg, #007bff, #6f42c1);
+  background: linear-gradient(90deg, #1b0215, #6f42c1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: fadeIn 2s ease-in-out;
