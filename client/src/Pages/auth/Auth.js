@@ -56,24 +56,13 @@ const Auth = () => {
       {/* Left Side */}
       <div className="a-left">
         <img src={Logo} alt="Logo" />
-        <div className="Webname">
-          <h2>Welcome to web</h2>
-          <h5>
-            Explore the ideas throughout <br /> the world.
-          </h5>
-          <p
-            style={{
-              fontSize: '14px',
-              marginTop: '5px',
-              fontStyle: 'italic',
-              color: 'blue',
-              textAlign: 'center',
-              fontWeight: 'bold',
-            }}
-          >
-            thanh phong
-          </p>
-        </div>
+          <div className="Webname">
+            <h2>Welcome to web</h2>
+            <h5>
+              Explore the ideas throughout <br /> the world.
+            </h5>
+            <p className="signature">thanh phong</p>
+          </div>
       </div>
 
       {/* Right Side */}

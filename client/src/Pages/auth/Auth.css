@@ -66,3 +66,14 @@
     width: 100%;
     align-items: center;
 }
+.signature {
+  font-size: 16px;
+  margin-top: 8px;
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #007bff, #6f42c1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
