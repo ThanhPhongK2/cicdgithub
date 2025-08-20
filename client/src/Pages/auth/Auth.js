@@ -61,7 +61,7 @@ const Auth = () => {
           <h5 className="subtitle">
             Explore the ideas throughout <br /> the world.
           </h5>
-          <p className="signature">thanh phong</p>
+          <p className="signature">Phongdeptrai</p>
         </div>
       </div>
 
