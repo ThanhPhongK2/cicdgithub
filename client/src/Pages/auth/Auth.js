@@ -61,8 +61,17 @@ const Auth = () => {
           <h5>
             Explore the ideas throughout <br /> the world.
           </h5>
-          <p style={{ fontSize: '14px', marginTop: '5px', fontWeight: 'bold' }}>
-    thanh phong
+          <p
+            style={{
+              fontSize: '14px',
+              marginTop: '5px',
+              fontStyle: 'italic',
+              color: 'blue',
+              textAlign: 'center',
+              fontWeight: 'bold',
+            }}
+          >
+            thanh phong
           </p>
         </div>
       </div>
