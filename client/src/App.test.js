@@ -29,5 +29,5 @@ test('renders Auth when not logged in', () => {
   });
 
   // Text có thật trong Auth.jsx của bạn
-  expect(screen.getByText(/Welcome to web/i)).toBeInTheDocument();
+  expect(screen.getByText(/Welcome to Social/i)).toBeInTheDocument();
 });
