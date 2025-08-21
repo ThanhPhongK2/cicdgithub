@@ -3,7 +3,7 @@ import { createPost, deletePost, getPost, like_dislike_Post, timeline, updatePos
 
 const router = express.Router();
 
-router.post('/', createPost);
+router.post('/', createPost);       // ✅ Đăng bài mới
 router.get('/:id', getPost);
 router.put('/:id', updatePost);
 router.delete('/:id', deletePost);
