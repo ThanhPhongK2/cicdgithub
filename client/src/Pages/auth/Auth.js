@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import './Auth.css';
-import Logo from '../../Img/logo.png';
-import { useDispatch, useSelector } from 'react-redux';
-import { logIn, signUp } from '../../actions/AuthAction.js';
+import React, { useState } from "react";
+import "./Auth.css";
+import Logo from "../../Img/logo.png";
+import { useDispatch, useSelector } from "react-redux";
+import { logIn, signUp } from "../../actions/AuthAction.js";
+import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
 
 const Auth = () => {
   const dispatch = useDispatch();
@@ -10,13 +11,13 @@ const Auth = () => {
 
   const [isSignUp, setIsSignUp] = useState(true);
   const [data, setData] = useState({
-    firstname: '',
-    lastname: '',
-    email: '',
-    password: '',
-    confirmpass: '',
+    firstname: "",
+    lastname: "",
+    email: "",
+    password: "",
+    confirmpass: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const { firstname, lastname, email, password, confirmpass } = data;
 
@@ -26,11 +27,11 @@ const Auth = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (isSignUp) {
       if (password !== confirmpass) {
-        setError('Passwords do not match');
+        setError("Passwords do not match");
         return;
       }
       dispatch(signUp(data));
@@ -41,13 +42,13 @@ const Auth = () => {
 
   const handleToggleMode = () => {
     setIsSignUp((prev) => !prev);
-    setError('');
+    setError("");
     setData({
-      firstname: '',
-      lastname: '',
-      email: '',
-      password: '',
-      confirmpass: '',
+      firstname: "",
+      lastname: "",
+      email: "",
+      password: "",
+      confirmpass: "",
     });
   };
 
@@ -57,7 +58,7 @@ const Auth = () => {
       <div className="a-left">
         <img src={Logo} alt="Logo" />
         <div className="Webname">
-          <h2 className="title">Welcome to web</h2>
+          <h2 className="title">✨ Welcome to web ✨</h2>
           <h5 className="subtitle">
             Explore the ideas throughout <br /> the world.
           </h5>
@@ -68,34 +69,38 @@ const Auth = () => {
       {/* Right Side */}
       <div className="a-right">
         <form className="infoForm authForm" onSubmit={handleSubmit}>
-          <h2>{isSignUp ? 'Sign Up' : 'Log In'}</h2>
+          <h2>{isSignUp ? "Create Account" : "Welcome Back"}</h2>
 
           {isSignUp && (
-            <div>
-              <input
-                type="text"
-                placeholder="First Name"
-                className="infoInput"
-                name="firstname"
-                onChange={handleChange}
-                value={firstname}
-              />
-              <input
-                type="text"
-                placeholder="Last Name"
-                className="infoInput"
-                name="lastname"
-                onChange={handleChange}
-                value={lastname}
-              />
+            <div className="inputRow">
+              <div className="inputWithIcon">
+                <FaUser className="icon" />
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  name="firstname"
+                  onChange={handleChange}
+                  value={firstname}
+                />
+              </div>
+              <div className="inputWithIcon">
+                <FaUser className="icon" />
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  name="lastname"
+                  onChange={handleChange}
+                  value={lastname}
+                />
+              </div>
             </div>
           )}
 
-          <div>
+          <div className="inputWithIcon">
+            <FaEnvelope className="icon" />
             <input
               type="email"
               placeholder="Email"
-              className="infoInput"
               name="email"
               onChange={handleChange}
               value={email}
@@ -103,59 +108,42 @@ const Auth = () => {
             />
           </div>
 
-          <div>
+          <div className="inputWithIcon">
+            <FaLock className="icon" />
             <input
               type="password"
               placeholder="Password"
-              className="infoInput"
               name="password"
               onChange={handleChange}
               value={password}
               required
             />
-            {isSignUp && (
+          </div>
+
+          {isSignUp && (
+            <div className="inputWithIcon">
+              <FaLock className="icon" />
               <input
                 type="password"
                 placeholder="Confirm Password"
-                className="infoInput"
                 name="confirmpass"
                 onChange={handleChange}
                 value={confirmpass}
                 required
               />
-            )}
-          </div>
-
-          {error && (
-            <span
-              style={{
-                color: 'red',
-                fontSize: '12px',
-                alignSelf: 'flex-end',
-                marginRight: '5px',
-              }}
-            >
-              * {error}
-            </span>
+            </div>
           )}
 
-          <div>
-            <span
-              style={{ fontSize: '12px', cursor: 'pointer' }}
-              onClick={handleToggleMode}
-            >
-              {isSignUp
-                ? 'Already have an account? Login here'
-                : "Don't have an account? Sign Up here"}
-            </span>
-          </div>
+          {error && <p className="errorMessage">⚠ {error}</p>}
 
-          <button
-            className="button infoButton"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Login'}
+          <span className="toggleText" onClick={handleToggleMode}>
+            {isSignUp
+              ? "Already have an account? Login here"
+              : "Don't have an account? Sign Up here"}
+          </span>
+
+          <button className="button infoButton" type="submit" disabled={loading}>
+            {loading ? "Loading..." : isSignUp ? "Sign Up" : "Login"}
           </button>
         </form>
       </div>
