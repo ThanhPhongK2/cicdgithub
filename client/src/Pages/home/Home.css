@@ -1,8 +1,33 @@
 .Home {
   min-height: 100vh;
   background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* Gradient background blobs */
+.home-bg .blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.5;
+}
+.blob-purple {
+  width: 400px;
+  height: 400px;
+  top: -100px;
+  left: -100px;
+  background: #6a11cb;
+}
+.blob-blue {
+  width: 500px;
+  height: 500px;
+  bottom: -200px;
+  right: -150px;
+  background: #2575fc;
+}
+
+/* Layout container */
 .home-container {
   display: grid;
   grid-template-columns: 260px 1fr 300px;
@@ -10,15 +35,24 @@
   max-width: 1400px;
   margin: auto;
   padding: 2rem 1rem;
+  position: relative;
+  z-index: 1;
 }
 
+/* Card style */
 .card {
+  border-radius: 1.2rem;
   background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1);
   padding: 1rem;
 }
+.glass-card {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
 
+/* Responsive */
 @media (max-width: 992px) {
   .home-container {
     grid-template-columns: 1fr;
