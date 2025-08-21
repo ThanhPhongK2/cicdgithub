@@ -1,146 +1,93 @@
-/* Layout tổng */
 .Auth {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  align-items: center;
+  justify-content: center;
   color: #333;
 }
 
-/* Left side */
 .a-left {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
   text-align: center;
-  padding: 20px;
+  color: white;
 }
-
 .auth-logo {
-  width: 100px;
-  margin-bottom: 20px;
-  filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));
+  width: 80px;
+  margin-bottom: 1rem;
 }
-
 .Webname .title {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: bold;
-  margin-bottom: 10px;
-  animation: fadeIn 1s ease-in-out;
 }
-
 .Webname .subtitle {
-  font-size: 1rem;
   opacity: 0.9;
-  margin-bottom: 20px;
 }
-
-.Webname .signature {
-  font-style: italic;
+.signature {
+  margin-top: 1rem;
   font-size: 0.9rem;
-  opacity: 0.7;
 }
 
-/* Right side (Form) */
 .a-right {
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
-.authForm {
-  background: white;
+.glass-card {
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.2);
   padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
-  width: 350px;
-  animation: fadeInScale 0.4s ease;
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  color: #fff;
 }
 
-.authForm h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #444;
-}
-
-/* Input có icon */
 .inputWithIcon {
   display: flex;
   align-items: center;
-  border: 1px solid #ddd;
-  padding: 0.6rem;
-  border-radius: 8px;
   margin-bottom: 1rem;
-  background: #f9f9f9;
-  transition: border 0.3s;
+  background: rgba(255,255,255,0.15);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
 }
-
-.inputWithIcon:hover {
-  border-color: #667eea;
-}
-
 .inputWithIcon .icon {
   margin-right: 0.5rem;
-  color: #666;
+  color: #fff;
 }
-
 .inputWithIcon input {
   flex: 1;
   border: none;
-  outline: none;
   background: transparent;
+  outline: none;
+  color: #fff;
+}
+.inputWithIcon input::placeholder {
+  color: rgba(255,255,255,0.7);
 }
 
-/* Nút login/signup */
-.button.infoButton {
+.primary-btn {
   width: 100%;
-  padding: 0.8rem;
-  border-radius: 8px;
-  border: none;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #6a11cb, #2575fc);
   color: white;
-  font-weight: bold;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
-
-.button.infoButton:hover {
+.primary-btn:hover {
   opacity: 0.9;
-  transform: translateY(-2px);
 }
-
-.errorMessage {
-  color: red;
-  font-size: 13px;
-  margin-bottom: 0.5rem;
-  text-align: left;
-}
-
-.toggleText {
-  font-size: 12px;
-  display: block;
-  margin: 0.5rem 0 1rem;
-  color: #667eea;
+.toggleLink {
+  color: #ffd369;
   cursor: pointer;
-  text-align: center;
-  transition: 0.2s;
+  font-weight: 500;
 }
-
-.toggleText:hover {
-  text-decoration: underline;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+.errorMessage {
+  color: #ff6b6b;
+  font-size: 0.9rem;
 }

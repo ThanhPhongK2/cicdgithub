@@ -21,16 +21,13 @@ const Auth = () => {
 
   const { firstname, lastname, email, password, confirmpass } = data;
 
-  // Handle input change
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
-  // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
-
     if (isSignUp) {
       if (password !== confirmpass) {
         setError("Passwords do not match");
@@ -42,7 +39,6 @@ const Auth = () => {
     }
   };
 
-  // Toggle mode between Sign Up and Login
   const handleToggleMode = () => {
     setIsSignUp((prev) => !prev);
     setError("");
@@ -57,21 +53,19 @@ const Auth = () => {
 
   return (
     <div className="Auth">
-      {/* Left Side */}
       <div className="a-left">
         <img src={Logo} alt="Logo" className="auth-logo" />
         <div className="Webname">
-          <h2 className="title">✨ Welcome to Web ✨</h2>
+          <h2 className="title">✨ Welcome to Social ✨</h2>
           <h5 className="subtitle">
-            Explore the ideas throughout <br /> the world.
+            Connect & share your moments <br /> with the world
           </h5>
           <p className="signature">Made with ❤️ by Phong</p>
         </div>
       </div>
 
-      {/* Right Side */}
       <div className="a-right">
-        <form className="infoForm authForm" onSubmit={handleSubmit}>
+        <form className="infoForm authForm glass-card" onSubmit={handleSubmit}>
           <h2>{isSignUp ? "Create Account" : "Welcome Back"}</h2>
 
           {isSignUp && (
@@ -159,11 +153,7 @@ const Auth = () => {
             )}
           </p>
 
-          <button
-            type="submit"
-            className="button infoButton"
-            disabled={loading}
-          >
+          <button type="submit" className="button primary-btn" disabled={loading}>
             {loading ? "Loading..." : isSignUp ? "Sign Up" : "Login"}
           </button>
         </form>

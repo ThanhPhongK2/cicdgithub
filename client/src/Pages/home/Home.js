@@ -7,22 +7,18 @@ import RightSide from "../../Components/RightSide/RightSide";
 const Home = () => {
   return (
     <div className="Home">
-      {/* Background gradient */}
-      <div className="home-bg"></div>
+      <div className="home-bg" />
 
       <div className="home-container">
-        {/* Sidebar trái */}
-        <aside className="home-sidebar">
+        <aside className="home-sidebar card">
           <ProfileSide />
         </aside>
 
-        {/* Feed chính */}
-        <main className="home-feed">
+        <main className="home-feed card">
           <PostSide />
         </main>
 
-        {/* Sidebar phải */}
-        <aside className="home-rightbar">
+        <aside className="home-rightbar card">
           <RightSide />
         </aside>
       </div>

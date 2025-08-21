@@ -8,15 +8,12 @@ import RightSide from "../../Components/RightSide/RightSide";
 const Profile = () => {
   return (
     <div className="Profile">
-      {/* Background cover */}
-      <div
-        className="profile-cover"
-        style={{ background: "#ccc" }} // chỉ dùng màu nền, không ảnh
-      >
+      {/* Cover */}
+      <div className="profile-cover">
         <div className="profile-gradient"></div>
         <div className="profile-avatar-wrapper">
           <img
-            src="https://via.placeholder.com/150" // ảnh avatar mặc định online
+            src="/images/profileImg.jpg"
             alt="Profile Avatar"
             className="profile-avatar"
           />
@@ -24,19 +21,14 @@ const Profile = () => {
       </div>
 
       <div className="ProfilePage-Wrapper">
-        {/* Sidebar trái */}
-        <aside className="profile-left">
+        <aside className="profile-left card">
           <ProfilePageLeft />
         </aside>
-
-        {/* Content chính */}
-        <main className="profile-center">
+        <main className="profile-center card">
           <ProfileCard location="profilePage" />
           <PostSide />
         </main>
-
-        {/* Sidebar phải */}
-        <aside className="profile-right">
+        <aside className="profile-right card">
           <RightSide />
         </aside>
       </div>
