@@ -5,7 +5,7 @@ import ProfileCard from "../../Components/ProfileCard/ProfileCard";
 import PostSide from "../../Components/PostSide/PostSide";
 import RightSide from "../../Components/RightSide/RightSide";
 
-//  Import ảnh từ src/Img (chữ I hoa)
+// Nếu sau này muốn dùng ảnh thật thì import lại ở đây:
 // import coverImage from "../../img/cover.jpg";
 // import defaultAvatar from "../../img/profileImg.jpg";
 
@@ -15,12 +15,14 @@ const Profile = () => {
       {/* Background cover */}
       <div
         className="profile-cover"
-        style={{ background: `url(${coverImage}) center/cover no-repeat` }}
+        // Nếu có ảnh cover: `url(${coverImage}) center/cover no-repeat`
+        style={{ background: "#ccc" }}
       >
         <div className="profile-gradient"></div>
         <div className="profile-avatar-wrapper">
           <img
-            src={defaultAvatar}
+            // Nếu có avatar: src={defaultAvatar}
+            src="https://via.placeholder.com/150"
             alt="Profile Avatar"
             className="profile-avatar"
           />
