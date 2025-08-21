@@ -5,7 +5,7 @@ import ProfileCard from "../../Components/ProfileCard/ProfileCard";
 import PostSide from "../../Components/PostSide/PostSide";
 import RightSide from "../../Components/RightSide/RightSide";
 
-// Import ảnh từ src/Img (chữ I hoa)
+// Import ảnh từ src/img
 import coverImage from "../../Img/cover.jpg";
 import defaultAvatar from "../../Img/defaultProfile.png";
 

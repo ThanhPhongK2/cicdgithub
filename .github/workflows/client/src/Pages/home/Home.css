@@ -1,0 +1,47 @@
+.Home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f0f2f5;
+}
+
+.home-bg {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #6a11cb33, #2575fc33);
+  z-index: -1;
+}
+
+.home-container {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: auto;
+  width: 100%;
+}
+
+.home-sidebar,
+.home-feed,
+.home-rightbar {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+}
+
+.home-feed {
+  min-height: 80vh;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .home-container {
+    grid-template-columns: 1fr;
+  }
+  .home-sidebar,
+  .home-rightbar {
+    display: none;
+  }
+}
