@@ -8,9 +8,9 @@ import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { useDispatch, useSelector } from "react-redux";
 
 // chỉ giữ uploadImage ở UploadAction
-import { uploadImage } from "../../actions/UploadAction";
+import { uploadImage } from "../../actions/UploadAction.js";
 // còn uploadPost thì lấy từ PostAction
-import { uploadPost } from "../../actions/PostAction";
+import { uploadPost } from "../../actions/PostAction.js";
 
 const PostShare = () => {
   const loading = useSelector((state) => state.postReducer.uploading);
