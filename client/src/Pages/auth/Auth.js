@@ -56,13 +56,13 @@ const Auth = () => {
     <div className="Auth">
       {/* Left Side */}
       <div className="a-left">
-        <img src={Logo} alt="Logo" />
+        <img src={Logo} alt="Logo" className="auth-logo" />
         <div className="Webname">
-          <h2 className="title">✨ Welcome to web ✨</h2>
+          <h2 className="title">✨ Welcome to Web ✨</h2>
           <h5 className="subtitle">
             Explore the ideas throughout <br /> the world.
           </h5>
-          <p className="signature">Phong</p>
+          <p className="signature">Made with ❤️ by Phong</p>
         </div>
       </div>
 

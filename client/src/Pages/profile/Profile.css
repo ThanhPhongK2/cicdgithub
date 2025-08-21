@@ -1,63 +1,59 @@
-.Profile{
-    position: relative;
-    display: grid;
-    grid-template-columns: 18rem auto 20rem;
-    gap: 1rem;
-}
-
-.ProfilePage-Center{
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
 .Profile {
+  width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  background: linear-gradient(135deg, #f3f4f9, #e9edf5);
   display: flex;
   justify-content: center;
-  align-items: flex-start;
   padding: 20px;
-  font-family: 'Poppins', sans-serif;
 }
 
 .ProfilePage-Wrapper {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* trái - giữa - phải */
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 20px;
   width: 100%;
-  max-width: 1200px;
-  animation: fadeIn 1s ease-in-out;
+  max-width: 1400px;
 }
 
-/* Card chung */
-.ProfilePage-Wrapper > * {
+/* Cột profile trái, cột posts giữa, cột trending phải */
+.ProfilePage-Wrapper > div {
   background: #fff;
-  border-radius: 20px;
-  padding: 15px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.ProfilePage-Wrapper > *:hover {
+.ProfilePage-Wrapper > div:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: 0px 8px 20px rgba(0,0,0,0.12);
 }
 
-/* Cột giữa nổi bật hơn */
+/* Cột trung tâm có ProfileCard + PostSide */
 .ProfilePage-Center {
-  border-left: 3px solid #f1f1f1;
-  border-right: 3px solid #f1f1f1;
-  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* Hiệu ứng load */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
+/* Responsive cho tablet */
+@media (max-width: 1024px) {
+  .ProfilePage-Wrapper {
+    grid-template-columns: 1fr 2fr;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .ProfilePage-Wrapper > div:last-child {
+    display: none; /* Ẩn RightSide */
+  }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .ProfilePage-Wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .ProfilePage-Wrapper > div {
+    padding: 15px;
   }
 }

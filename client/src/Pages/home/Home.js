@@ -7,9 +7,11 @@ import RightSide from '../../Components/RightSide/RightSide'
 const Home = () => {
   return (
     <div className="Home">
+      <div className="home-container">
         <ProfileSide />
         <PostSide />
         <RightSide />
+      </div>
     </div>
   )
 }

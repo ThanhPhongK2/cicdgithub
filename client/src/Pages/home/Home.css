@@ -1,6 +1,52 @@
-.Home{
-    position: relative;
-    display: grid;
-    grid-template-columns: 18rem auto 20rem;   
-    gap: 1rem;
+.Home {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f9f9fb, #eef1f7);
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.home-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1400px;
+}
+
+/* Card style cho từng cột */
+.home-container > div {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-container > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0px 8px 20px rgba(0,0,0,0.12);
+}
+
+/* Responsive cho tablet */
+@media (max-width: 1024px) {
+  .home-container {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  .home-container > div:last-child {
+    display: none; /* Ẩn RightSide trên tablet */
+  }
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .home-container {
+    grid-template-columns: 1fr;
+  }
+
+  .home-container > div {
+    padding: 15px;
+  }
 }
