@@ -1,10 +1,13 @@
+/* Layout tổng */
 .Auth {
   display: flex;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  padding: 20px;
   color: #333;
 }
 
+/* Left side */
 .a-left {
   flex: 1;
   display: flex;
@@ -12,8 +15,36 @@
   justify-content: center;
   align-items: center;
   color: white;
+  text-align: center;
+  padding: 20px;
 }
 
+.auth-logo {
+  width: 100px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));
+}
+
+.Webname .title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.Webname .subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 20px;
+}
+
+.Webname .signature {
+  font-style: italic;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+/* Right side (Form) */
 .a-right {
   flex: 1;
   display: flex;
@@ -27,7 +58,7 @@
   border-radius: 1rem;
   box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
   width: 350px;
-  animation: fadeIn 0.4s ease;
+  animation: fadeInScale 0.4s ease;
 }
 
 .authForm h2 {
@@ -36,6 +67,7 @@
   color: #444;
 }
 
+/* Input có icon */
 .inputWithIcon {
   display: flex;
   align-items: center;
@@ -44,6 +76,11 @@
   border-radius: 8px;
   margin-bottom: 1rem;
   background: #f9f9f9;
+  transition: border 0.3s;
+}
+
+.inputWithIcon:hover {
+  border-color: #667eea;
 }
 
 .inputWithIcon .icon {
@@ -58,6 +95,7 @@
   background: transparent;
 }
 
+/* Nút login/signup */
 .button.infoButton {
   width: 100%;
   padding: 0.8rem;
@@ -96,7 +134,13 @@
   text-decoration: underline;
 }
 
+/* Animation */
 @keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
