@@ -5,7 +5,6 @@ import "./App.css";
 import Auth from "./Pages/auth/Auth";
 import Home from "./Pages/home/Home";
 import Profile from "./Pages/profile/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const user = useSelector((state) => state.authReducer.authData);
@@ -23,11 +22,7 @@ function App() {
         />
         <Route
           path="/home"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
+          element={user ? <Home /> : <Navigate to="/auth" />}
         />
         <Route
           path="/auth"
@@ -35,11 +30,7 @@ function App() {
         />
         <Route
           path="/profile/:id"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
+          element={user ? <Profile /> : <Navigate to="/auth" />}
         />
       </Routes>
     </div>
