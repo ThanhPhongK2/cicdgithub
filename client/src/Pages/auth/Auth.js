@@ -21,10 +21,12 @@ const Auth = () => {
 
   const { firstname, lastname, email, password, confirmpass } = data;
 
+  // Handle input change
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
+  // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
@@ -36,10 +38,11 @@ const Auth = () => {
       }
       dispatch(signUp(data));
     } else {
-      dispatch(logIn(data));
+      dispatch(logIn({ email, password }));
     }
   };
 
+  // Toggle mode between Sign Up and Login
   const handleToggleMode = () => {
     setIsSignUp((prev) => !prev);
     setError("");
@@ -81,6 +84,7 @@ const Auth = () => {
                   name="firstname"
                   onChange={handleChange}
                   value={firstname}
+                  required
                 />
               </div>
               <div className="inputWithIcon">
@@ -91,6 +95,7 @@ const Auth = () => {
                   name="lastname"
                   onChange={handleChange}
                   value={lastname}
+                  required
                 />
               </div>
             </div>
