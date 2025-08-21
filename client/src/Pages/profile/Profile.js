@@ -5,9 +5,9 @@ import ProfileCard from "../../Components/ProfileCard/ProfileCard";
 import PostSide from "../../Components/PostSide/PostSide";
 import RightSide from "../../Components/RightSide/RightSide";
 
-// Import ảnh từ src/Img (chữ I hoa)
-import coverImage from "../../Img/cover.jpg";
-import defaultAvatar from "../../Img/profileImg.jpg";
+//  Import ảnh từ src/Img (chữ I hoa)
+// import coverImage from "../../img/cover.jpg";
+// import defaultAvatar from "../../img/profileImg.jpg";
 
 const Profile = () => {
   return (
