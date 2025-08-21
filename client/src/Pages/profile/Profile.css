@@ -9,7 +9,7 @@
 .profile-cover {
   position: relative;
   height: 220px;
-  background: url("/images/cover.jpg") center/cover no-repeat;
+  background: #ccc;
 }
 
 .profile-gradient {
