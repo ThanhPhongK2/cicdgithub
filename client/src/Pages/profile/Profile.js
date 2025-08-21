@@ -5,15 +5,22 @@ import ProfileCard from "../../Components/ProfileCard/ProfileCard";
 import PostSide from "../../Components/PostSide/PostSide";
 import RightSide from "../../Components/RightSide/RightSide";
 
+// Import ảnh từ src/img
+import coverImage from "../../img/cover.jpg";
+import defaultAvatar from "../../img/defaultProfile.png";
+
 const Profile = () => {
   return (
     <div className="Profile">
       {/* Background cover */}
-      <div className="profile-cover">
+      <div
+        className="profile-cover"
+        style={{ background: `url(${coverImage}) center/cover no-repeat` }}
+      >
         <div className="profile-gradient"></div>
         <div className="profile-avatar-wrapper">
           <img
-            src="/images/defaultProfile.png"
+            src={defaultAvatar}
             alt="Profile Avatar"
             className="profile-avatar"
           />
