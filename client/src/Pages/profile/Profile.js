@@ -6,8 +6,8 @@ import PostSide from "../../Components/PostSide/PostSide";
 import RightSide from "../../Components/RightSide/RightSide";
 
 // Import ảnh từ src/img
-import coverImage from "../../img/cover.jpg";
-import defaultAvatar from "../../img/defaultProfile.png";
+import coverImage from "../../Img/cover.jpg";
+import defaultAvatar from "../../Img/defaultProfile.png";
 
 const Profile = () => {
   return (
