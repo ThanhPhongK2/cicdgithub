@@ -5,7 +5,7 @@ import "./App.css";
 import Auth from "./Pages/auth/Auth";
 import Home from "./Pages/home/Home";
 import Profile from "./Pages/profile/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
+// import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const user = useSelector((state) => state.authReducer.authData);
