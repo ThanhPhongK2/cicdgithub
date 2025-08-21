@@ -1,22 +1,41 @@
-import React from 'react';
-import './Profile.css';
-import ProfilePageLeft from '../../Components/ProfilePageLeft/ProfilePageLeft';
-import ProfileCard from '../../Components/ProfileCard/ProfileCard';
-import PostSide from '../../Components/PostSide/PostSide';
-import RightSide from '../../Components/RightSide/RightSide';
+import React from "react";
+import "./Profile.css";
+import ProfilePageLeft from "../../Components/ProfilePageLeft/ProfilePageLeft";
+import ProfileCard from "../../Components/ProfileCard/ProfileCard";
+import PostSide from "../../Components/PostSide/PostSide";
+import RightSide from "../../Components/RightSide/RightSide";
 
 const Profile = () => {
   return (
     <div className="Profile">
-      <div className="ProfilePage-Wrapper">
-        <ProfilePageLeft />
+      {/* Background cover */}
+      <div className="profile-cover">
+        <div className="profile-gradient"></div>
+        <div className="profile-avatar-wrapper">
+          <img
+            src="/images/defaultProfile.png"
+            alt="Profile Avatar"
+            className="profile-avatar"
+          />
+        </div>
+      </div>
 
-        <div className="ProfilePage-Center">
+      <div className="ProfilePage-Wrapper">
+        {/* Sidebar trái */}
+        <aside className="profile-left">
+          <ProfilePageLeft />
+        </aside>
+
+        {/* Content chính */}
+        <main className="profile-center">
           <ProfileCard location="profilePage" />
           <PostSide />
-        </div>
+        </main>
 
-        <RightSide />
+        {/* Sidebar phải */}
+        <aside className="profile-right">
+          <RightSide />
+        </aside>
       </div>
     </div>
   );
