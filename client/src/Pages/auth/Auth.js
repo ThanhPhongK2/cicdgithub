@@ -136,13 +136,29 @@ const Auth = () => {
 
           {error && <p className="errorMessage">⚠ {error}</p>}
 
-          <span className="toggleText" onClick={handleToggleMode}>
-            {isSignUp
-              ? "Already have an account? Login here"
-              : "Don't have an account? Sign Up here"}
-          </span>
+          <p className="toggleText">
+            {isSignUp ? (
+              <>
+                Already have an account?{" "}
+                <span className="toggleLink" onClick={handleToggleMode}>
+                  Login here
+                </span>
+              </>
+            ) : (
+              <>
+                Don&apos;t have an account?{" "}
+                <span className="toggleLink" onClick={handleToggleMode}>
+                  Sign Up here
+                </span>
+              </>
+            )}
+          </p>
 
-          <button className="button infoButton" type="submit" disabled={loading}>
+          <button
+            type="submit"
+            className="button infoButton"
+            disabled={loading}
+          >
             {loading ? "Loading..." : isSignUp ? "Sign Up" : "Login"}
           </button>
         </form>
