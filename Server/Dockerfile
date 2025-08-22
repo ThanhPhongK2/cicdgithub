@@ -1,7 +1,7 @@
 # Stage 1: Install Node deps
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package*.json ./       # từ Server/package*.json
+COPY package*.json ./       
 RUN npm install
 
 # Stage 2: Copy source & install Python
