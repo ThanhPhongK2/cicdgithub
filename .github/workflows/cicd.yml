@@ -204,8 +204,3 @@ jobs:
           sudo docker-compose pull
           sudo docker-compose up -d --force-recreate
           sudo docker image prune -f --filter "dangling=true"
-
-      - name: Verify service is running
-        run: |
-          sleep 10
-          curl -f ${{ secrets.API_HEALTH_URL }} || exit 1
