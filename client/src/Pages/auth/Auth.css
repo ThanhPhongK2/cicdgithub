@@ -82,12 +82,37 @@
 .primary-btn:hover {
   opacity: 0.9;
 }
-.toggleLink {
-  color: #ffd369;
-  cursor: pointer;
-  font-weight: 500;
-}
+
 .errorMessage {
   color: #ff6b6b;
   font-size: 0.9rem;
+}
+.toggleLink {
+  color: #ffd369;              /* vàng chanh nổi bật trên nền tím/xanh */
+  cursor: pointer;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+/* khi hover đổi màu sáng hơn + phóng to nhẹ */
+.toggleLink:hover {
+  color: #ffea00;              /* vàng sáng hơn */
+  transform: scale(1.05);
+}
+
+/* underline hiệu ứng chạy từ trái sang phải */
+.toggleLink::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  left: 0;
+  bottom: -2px;
+  background: linear-gradient(90deg, #ffd369, #ff9f1c, #ff006e); /* gradient vàng → cam → hồng */
+  transition: width 0.4s ease-in-out;
+}
+
+.toggleLink:hover::after {
+  width: 100%;
 }
