@@ -7,7 +7,6 @@ services:
     ports:
       - "5000:5000"
     restart: always
-
   frontend:
     image: thanhphongkm20/frontend:${GITHUB_SHA:-latest}
     env_file:
