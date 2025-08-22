@@ -60,7 +60,7 @@ const Auth = () => {
           <h5 className="subtitle">
             Connect & share your moments <br /> with the world
           </h5>
-          <p className="signature">Made with ❤️ by Phong</p>
+          <p className="signature">Made with ❤️ by TPhong</p>
         </div>
       </div>
 
