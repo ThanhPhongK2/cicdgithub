@@ -57,8 +57,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r Server/python-app/requirements.txt
-      - run: flake8 Server/python-app
+      - run: pip install -r Server/app/requirements.txt
+      - run: flake8 Server/app
 
   # --------------------------
   # Test backend (Unit Test)
@@ -110,8 +110,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - run: pip install -r Server/python-app/requirements.txt
-      - run: pytest Server/python-app/tests
+      - run: pip install -r Server/app/requirements.txt
+      - run: pytest Server/app/tests
 
   # --------------------------
   # Build frontend
