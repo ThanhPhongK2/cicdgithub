@@ -19,7 +19,7 @@ COPY . .
 
 # Cài Python dependencies
 WORKDIR /app/app
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 # Trở lại thư mục chính Node
 WORKDIR /app
