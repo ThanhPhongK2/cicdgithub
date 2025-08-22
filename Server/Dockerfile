@@ -19,7 +19,7 @@ COPY Server/index.js ./
 COPY Server/package*.json ./ 
 
 # Copy Python code
-COPY Server/app /app/app
+COPY Server/app ./app
 
 # Chuyển vào thư mục Python và cài deps
 WORKDIR /app/app
