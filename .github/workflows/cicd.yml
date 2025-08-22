@@ -173,16 +173,6 @@ jobs:
           export GITHUB_SHA=${GITHUB_SHA}
           sudo docker-compose pull
           sudo docker-compose up -d --force-recreate
-
-          # Cleanup old Docker images
-          sudo docker images ${{ secrets.DOCKER_USERNAME }}/frontend --format "{{.Repository}}:{{.Tag}}" \
-            | grep -v -e "latest" -e "${GITHUB_SHA}" \
-            | xargs -r sudo docker rmi -f
-
-          sudo docker images ${{ secrets.DOCKER_USERNAME }}/backend --format "{{.Repository}}:{{.Tag}}" \
-            | grep -v -e "latest" -e "${GITHUB_SHA}" \
-            | xargs -r sudo docker rmi -f
-
           sudo docker image prune -f --filter "dangling=true"
 
       - name: Verify service is running
