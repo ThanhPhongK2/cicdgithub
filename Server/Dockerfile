@@ -1,47 +1,35 @@
-# --------------------------
 # Stage 1: Install Node deps
-# --------------------------
 FROM node:20-alpine AS deps
-
-# Thiết lập thư mục làm việc
 WORKDIR /app
-
-# Copy package.json + package-lock.json để cài dependencies
-COPY Server/package*.json ./
+COPY package*.json ./       # từ Server/package*.json
 RUN npm install
 
-# --------------------------
 # Stage 2: Copy source & install Python
-# --------------------------
 FROM node:20-alpine
-
-# Thiết lập thư mục làm việc
 WORKDIR /app
 
 # Cài Python và pip
-RUN apk add --no-cache python3 py3-pip bash
+RUN apk add --no-cache python3 py3-pip
 
-# Copy Node modules từ stage trước
+# Copy Node modules
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copy Node source
-COPY Server/index.js ./ 
-COPY Server/package*.json ./ 
+COPY index.js ./
+COPY Controllers ./Controllers
+COPY Middleware ./Middleware
+COPY Models ./Models
+COPY Routes ./Routes
+COPY public ./public
 
-# Copy Python app
-COPY Server/app ./app
+# Copy Python code
+COPY app ./app
 
-# Cài Python dependencies
+# Chuyển vào thư mục Python và cài deps
 WORKDIR /app/app
-# Nếu requirements.txt chưa tồn tại, tạo trống để tránh lỗi
-RUN test -f requirements.txt || touch requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
-# Trở lại thư mục Node chính
+# Trở lại thư mục chính Node
 WORKDIR /app
-
-# Expose port của Node app
 EXPOSE 3000
-
-# Chạy Node
 CMD ["npm", "start"]
