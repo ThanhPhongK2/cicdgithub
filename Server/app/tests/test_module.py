@@ -1,5 +1,4 @@
 # app/tests/test_module.py
-import pytest
 from app.module import add, is_even
 
 
