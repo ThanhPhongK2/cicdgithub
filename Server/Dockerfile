@@ -1,7 +1,7 @@
 # Stage 1: Install Node deps
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package*.json ./
+COPY Server/package*.json ./
 RUN npm install
 
 # Stage 2: Copy source & install Python
@@ -14,10 +14,14 @@ RUN apk add --no-cache python3 py3-pip
 # Copy Node modules
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy toàn bộ code Node + Python
-COPY . .
+# Copy Node source
+COPY Server/index.js ./ 
+COPY Server/package*.json ./ 
 
-# Cài Python dependencies
+# Copy Python code
+COPY Server/app /app/app
+
+# Chuyển vào thư mục Python và cài deps
 WORKDIR /app/app
 RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
